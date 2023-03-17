@@ -11,31 +11,22 @@
   <div>
     <canvas id="canvasFinalOutput" width="2048" height="2048" display="block"></canvas>
   </div>
-
-
   <div>
     <canvas id="canvasOutput" width="1920" height="1080"></canvas>
   </div>
-
   <div>
     <canvas id="canvasOutput2" width="256" height="256"></canvas>
   </div>
-
   <div>
-
     <canvas id="canvasX" width="46" height="56" hidden="True"></canvas>
-
     <img id="destination" />
   </div>
-
   <div>
     <img id="fullMap" src="3.png" alt="the fullmap" hidden="true" />
     <img id="xxx" src="x.png" alt="the x" hidden="true" />
   </div>
   </div>
-
   <script type="text/javascript">
-
 
     const destinationImage = document.querySelector("#destination");
     document.addEventListener("paste", pasteImage);
@@ -71,7 +62,7 @@
           if (!item.types.includes("image/png")) {
             throw new Error("Clipboard contains non-image data.");
           }
-          canvasOutput.removeAttribute("hidden"); 
+          canvasOutput.removeAttribute("hidden");
           let blob = await item.getType("image/png")
           let imgPaste = await createImageBitmap(blob);
           imgPaste.crossOrigin = "Anonymous";
@@ -117,19 +108,11 @@
     }
 
 
-
-
     function final() {
       let ctx = canvasFinalOutput.getContext('2d');
       ctx.drawImage(fullMap, 0, 0);
 
       let src = cv.imread('canvasFinalOutput', cv.IMREAD_GRAYSCALE);
-/*       let src = new cv.Mat();
-      let dSize = new cv.Size(2048, 2048);
-      cv.resize(src1, src, dSize, 0, 0, cv.INTER_AREA); */
-
-      //ctx.clearRect(0, 0, canvasOutput.width, canvasOutput.height);
-      //canvasOutput.setAttribute("hidden", "hidden");
 
       let templ = cv.imread('canvasOutput2', cv.IMREAD_GRAYSCALE);
       let templShrunk = new cv.Mat();
