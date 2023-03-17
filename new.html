@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Hello</title>
+</head>
+
+<body>
+  <p id="status">OpenCV.js is loading...</p>
+  <div>
+    <canvas id="canvasFinalOutput" width="2048" height="2048" display="block"></canvas>
+  </div>
+
+
+  <div>
+    <canvas id="canvasOutput" width="1920" height="1080"></canvas>
+  </div>
+
+  <div>
+    <canvas id="canvasOutput2" width="256" height="256"></canvas>
+  </div>
+
+  <div>
+
+    <canvas id="canvasX" width="46" height="56" hidden="True"></canvas>
+
+    <img id="destination" />
+  </div>
+
+  <div>
+    <img id="fullMap" src="3.png" alt="the fullmap" hidden="true" />
+    <img id="xxx" src="x.png" alt="the x" hidden="true" />
+  </div>
+  </div>
+
+  <script type="text/javascript">
+
+
+    const destinationImage = document.querySelector("#destination");
+    document.addEventListener("paste", pasteImage);
+    const canvasOutput = document.querySelector("#canvasOutput");
+    const canvasO2 = document.getElementById("canvasOutput2");
+    const canvasX = document.querySelector("#canvasX");
+    const offscreen = new OffscreenCanvas(250, 250);
+    const oSContext = offscreen.getContext("2d");
+    const canvasFinalOutput = document.getElementById("canvasFinalOutput");
+
+    async function pasteImage() {
+
+
+      let ctxClear = canvasOutput.getContext("2d");
+      ctxClear.clearRect(0, 0, canvasOutput.width, canvasOutput.height);
+      ctxClear = canvasO2.getContext("2d");
+      ctxClear.clearRect(0, 0, canvasO2.width, canvasO2.height);
+      ctxClear = canvasFinalOutput.getContext("2d");
+      ctxClear.clearRect(0, 0, canvasFinalOutput.width, canvasFinalOutput.height);
+
+
+
+
+      try {
+        const permission = await navigator.permissions.query({
+          name: "clipboard-read",
+        });
+        if (permission.state === "denied") {
+          throw new Error("Not allowed to read clipboard.");
+        }
+        const clipboardContents = await navigator.clipboard.read();
+        for (const item of clipboardContents) {
+          if (!item.types.includes("image/png")) {
+            throw new Error("Clipboard contains non-image data.");
+          }
+          canvasOutput.removeAttribute("hidden"); 
+          let blob = await item.getType("image/png")
+          let imgPaste = await createImageBitmap(blob);
+          imgPaste.crossOrigin = "Anonymous";
+          let cTX = canvasOutput.getContext('2d');
+          cTX.drawImage(imgPaste, 0, 0);
+
+          let ctX = canvasX.getContext('2d');
+          ctX.drawImage(xxx, 0, 0);
+
+          OgMatch();
+
+
+        }
+      } catch (error) {
+        console.error(error.message);
+      }
+    }
+
+
+    function OgMatch() {
+      let src = cv.imread('canvasOutput', cv.IMREAD_GRAYSCALE);
+      let templ = cv.imread('canvasX', cv.IMREAD_GRAYSCALE);
+      let dst = new cv.Mat();
+      let mask = new cv.Mat();
+      cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF_NORMED, mask);
+      let result = cv.minMaxLoc(dst, mask);
+      let maxPoint = result.maxLoc;
+      let point = new cv.Point(maxPoint.x + templ.cols, maxPoint.y + templ.rows);
+      console.log(maxPoint.x, maxPoint.y, point.x, point.y);
+      let color = new cv.Scalar(255, 0, 0, 255);
+      cv.imshow('canvasOutput', src);
+
+
+      let dst2 = new cv.Mat();
+      let rect = new cv.Rect(maxPoint.x - 100, maxPoint.y - 100, 250, 250);
+      dst2 = src.roi(rect);
+      cv.imshow('canvasOutput2', dst2);
+
+
+      src.delete(); dst2.delete(); templ.delete(); dst.delete(); mask.delete();
+
+      final();
+    }
+
+
+
+
+    function final() {
+      let ctx = canvasFinalOutput.getContext('2d');
+      ctx.drawImage(fullMap, 0, 0);
+
+      let src = cv.imread('canvasFinalOutput', cv.IMREAD_GRAYSCALE);
+/*       let src = new cv.Mat();
+      let dSize = new cv.Size(2048, 2048);
+      cv.resize(src1, src, dSize, 0, 0, cv.INTER_AREA); */
+
+      //ctx.clearRect(0, 0, canvasOutput.width, canvasOutput.height);
+      //canvasOutput.setAttribute("hidden", "hidden");
+
+      let templ = cv.imread('canvasOutput2', cv.IMREAD_GRAYSCALE);
+      let templShrunk = new cv.Mat();
+      let dsize = new cv.Size(31, 31);
+      cv.resize(templ, templShrunk, dsize, 0, 0, cv.INTER_AREA);
+      //cv.imshow('canvasX', templShrunk);
+      let dst = new cv.Mat();
+      let mask = new cv.Mat();
+      cv.matchTemplate(src, templShrunk, dst, cv.TM_CCOEFF_NORMED, mask);
+      let result = cv.minMaxLoc(dst, mask);
+      let maxPoint = result.maxLoc;
+      let point = new cv.Point(maxPoint.x + templShrunk.cols, maxPoint.y + templShrunk.rows);
+      //      console.log(maxPoint.x, maxPoint.y, point.x, point.y);
+      let color = new cv.Scalar(255, 0, 0, 255);
+      cv.rectangle(src, maxPoint, point, color, 2, cv.LINE_8, 0);
+      cv.imshow('canvasFinalOutput', src);
+
+      dst.delete(); mask.delete(); src.delete(); templShrunk.delete(); templ.delete();
+    }
+
+
+    function onOpenCvReady() {
+      document.getElementById('status').innerHTML = 'ready.';
+    }
+  </script>
+
+  <script async src="opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+</body>
+
+</html>
