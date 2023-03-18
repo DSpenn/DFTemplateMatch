@@ -9,7 +9,7 @@
 <body>
   <p id="status">OpenCV.js is loading...</p>
   <div>
-    <canvas id="canvasOutput2" width="256" height="256"></canvas>
+    <canvas id="canvasCroppedTm" width="256" height="256"></canvas>
   </div>
   <div>
     <canvas id="canvasFinalOutput" width="2048" height="2048" display="block"></canvas>
@@ -18,9 +18,10 @@
     <canvas id="canvasOutput" width="1920" height="1080"></canvas>
   </div>
   <div>
-    <canvas id="canvasX" width="46" height="56" hidden="True"></canvas>
+    <canvas id="canvasX" width="46" height="56" hidden="true"></canvas>
   </div>
-  <div>
+  <div hidden="true">
+    <img id="fullMap4" src="4.png" alt="the fullmap 4096" naturalHeight='4096' naturalWidth="4096" height="2048" width="2048" hidden="true" />
     <img id="fullMap" src="3.png" alt="the fullmap" hidden="true" />
     <img id="xxx" src="x.png" alt="the x" hidden="true" />
   </div>
@@ -29,24 +30,27 @@
 
     document.addEventListener("paste", pasteImage);
     const canvasOutput = document.querySelector("#canvasOutput");
-    const canvasO2 = document.getElementById("canvasOutput2");
+    const canvasCroppedTm = document.querySelector("#canvasCroppedTm");
     const canvasX = document.querySelector("#canvasX");
-    /*     const offscreen = new OffscreenCanvas(250, 250);
-        const oSContext = offscreen.getContext("2d"); */
-    const canvasFinalOutput = document.getElementById("canvasFinalOutput");
+    const canvasFinalOutput = document.querySelector("#canvasFinalOutput");
+    const offscreen = new OffscreenCanvas(4096, 4096);
+    const oSContext = offscreen.getContext("2d");
+    //querySelector is faster? //document.getElementsByClassName("canvasOutput");
+
+    const ctxF = canvasFinalOutput.getContext('2d');
+    const cTX = canvasOutput.getContext('2d');
+    const xContext = canvasX.getContext('2d');
+    const ctxCroppedMap = canvasCroppedTm.getContext('2d');
+
 
     async function pasteImage() {
 
+      ctxF.clearRect(0, 0, canvasFinalOutput.width, canvasFinalOutput.height);
+      cTX.clearRect(0, 0, canvasOutput.width, canvasOutput.height);
+      ctxCroppedMap.clearRect(0, 0, canvasCroppedTm.width, canvasCroppedTm.height);
 
-      let ctxClear = canvasOutput.getContext("2d");
-      ctxClear.clearRect(0, 0, canvasOutput.width, canvasOutput.height);
-      ctxClear = canvasO2.getContext("2d");
-      ctxClear.clearRect(0, 0, canvasO2.width, canvasO2.height);
-      ctxClear = canvasFinalOutput.getContext("2d");
-      ctxClear.clearRect(0, 0, canvasFinalOutput.width, canvasFinalOutput.height);
-
-      let ctX = canvasX.getContext('2d');
-      ctX.drawImage(xxx, 0, 0);
+      let xContext = canvasX.getContext('2d');
+      xContext.drawImage(xxx, 0, 0);
 
 
 
@@ -62,68 +66,75 @@
           if (!item.types.includes("image/png")) {
             throw new Error("Clipboard contains non-image data.");
           }
-          canvasOutput.removeAttribute("hidden");
           let blob = await item.getType("image/png")
-          let imgPaste = await createImageBitmap(blob);
-          let cTX = canvasOutput.getContext('2d');
-          cTX.drawImage(imgPaste, 0, 0);
-
-
-
-          let src = cv.imread('canvasOutput', cv.IMREAD_GRAYSCALE);
-          let templ = cv.imread('canvasX', cv.IMREAD_GRAYSCALE);
-          let dst = new cv.Mat();
-          let mask = new cv.Mat();
-          cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF_NORMED, mask);
-          let result = cv.minMaxLoc(dst, mask);
-          let maxPoint = result.maxLoc;
-          let point = new cv.Point(maxPoint.x + templ.cols, maxPoint.y + templ.rows);
-          console.log(maxPoint.x, maxPoint.y, point.x, point.y);
-          cv.imshow('canvasOutput', src);
-          let dst2 = new cv.Mat();
-          let rect = new cv.Rect(maxPoint.x - 100, maxPoint.y - 100, 250, 250);
-          dst2 = src.roi(rect);
-          cv.imshow('canvasOutput2', dst2);
-
-
-          src.delete(); dst2.delete(); templ.delete(); dst.delete(); mask.delete();
-          let ctxF = canvasFinalOutput.getContext('2d');
-          ctxF.drawImage(fullMap, 0, 0);
-          let srcF = cv.imread('canvasFinalOutput', cv.IMREAD_GRAYSCALE);
-
-          let templTrimmedMap = cv.imread('canvasOutput2', cv.IMREAD_GRAYSCALE);
-          let templShrunk = new cv.Mat();
-          let dsize = new cv.Size(31, 31);
-          cv.resize(templTrimmedMap, templShrunk, dsize, 0, 0, cv.INTER_AREA);
-
-          let dstFinal = new cv.Mat();
-          let maskFinal = new cv.Mat();
-
-          cv.matchTemplate(srcF, templShrunk, dstFinal, cv.TM_CCOEFF_NORMED, maskFinal);
-          let resultF = cv.minMaxLoc(dstFinal, maskFinal);
-          let maxPF = resultF.maxLoc;
-          let pointF = new cv.Point(maxPF.x + templShrunk.cols, maxPF.y + templShrunk.rows);
-          //console.log(maxPF.x, maxPF.y, pointF.x, pointF.y);
-
-          let color = new cv.Scalar(255, 0, 0, 255);
-          cv.rectangle(srcF, maxPF, pointF, color, 4, cv.LINE_8, 0);
-          cv.imshow('canvasFinalOutput', srcF);
-
-          dstFinal.delete(); maskFinal.delete(); srcF.delete(); templShrunk.delete(); templTrimmedMap.delete();
-
+          await handleImg(blob);
         }
       } catch (error) {
         console.error(error.message);
       }
     }
 
+    async function handleImg(blob) {
+      let imgPaste = await createImageBitmap(blob);
+      cTX.drawImage(imgPaste, 0, 0);
 
-    function onOpenCvReady() {
-      document.getElementById('status').innerHTML = 'ready.';
+      //canvasOutput.removeAttribute("hidden");
+
+      let src = cv.imread('canvasOutput', cv.IMREAD_GRAYSCALE);
+      let templ = cv.imread('canvasX', cv.IMREAD_GRAYSCALE);
+      let dst = new cv.Mat();
+      let mask = new cv.Mat();
+      cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF_NORMED, mask);
+      let result = cv.minMaxLoc(dst, mask);
+      let maxPoint = result.maxLoc;
+      let point = new cv.Point(maxPoint.x + templ.cols, maxPoint.y + templ.rows);
+      console.log(maxPoint.x, maxPoint.y, point.x, point.y);
+      cv.imshow('canvasOutput', src);
+      
+      let dst2 = new cv.Mat();
+      let rect = new cv.Rect(maxPoint.x - 100, maxPoint.y - 100, 250, 250);
+      dst2 = src.roi(rect);
+      cv.imshow('canvasCroppedTm', dst2);
+
+
+      src.delete(); dst2.delete(); templ.delete(); dst.delete(); mask.delete();
+
+      ctxF.drawImage(fullMap, 0, 0);
+      let srcF = cv.imread('canvasFinalOutput', cv.IMREAD_GRAYSCALE);
+      //canvasOutput.setAttribute("hidden", "hidden");
+      let templTrimmedMap = cv.imread('canvasCroppedTm', cv.IMREAD_GRAYSCALE);
+      let templShrunk = new cv.Mat();
+      let dsize = new cv.Size(31, 31);
+      cv.resize(templTrimmedMap, templShrunk, dsize, 0, 0, cv.INTER_AREA);
+
+      let dstFinal = new cv.Mat();
+      let maskFinal = new cv.Mat();
+      cv.matchTemplate(srcF, templShrunk, dstFinal, cv.TM_CCOEFF_NORMED, maskFinal);
+      let resultF = cv.minMaxLoc(dstFinal, maskFinal);
+      let maxPF = resultF.maxLoc;
+      let pointF = new cv.Point(maxPF.x + templShrunk.cols*1.3, maxPF.y + templShrunk.rows*1.3);
+      //console.log(maxPF.x, maxPF.y, pointF.x, pointF.y);
+
+      let color = new cv.Scalar(255, 0, 0, 255);
+      cv.rectangle(srcF, maxPF, pointF, color, 4, cv.LINE_8, 0);
+
+      cv.imshow('canvasFinalOutput', srcF);
+
+      dstFinal.delete(); maskFinal.delete(); srcF.delete(); templShrunk.delete(); templTrimmedMap.delete();
+
+
+
+
     }
-  </script>
 
-  <script async src="opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+    const Module = {
+      onRuntimeInitialized() {
+        document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+      }
+    };
+
+  </script>
+  <script async src="opencv.js" type="text/javascript"></script>
 </body>
 
 </html>
