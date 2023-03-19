@@ -15,44 +15,58 @@
     <canvas id="canvasFinalOutput" width="2048" height="2048" display="block"></canvas>
   </div>
   <div>
-    <canvas id="canvasOutput" width="1920" height="1080"></canvas>
-  </div>
-  <div>
-    <canvas id="canvasX" width="46" height="56" hidden="true"></canvas>
+    <canvas id="canvasOutput" width="1920" height="1080" hidden="true"></canvas>
   </div>
   <div hidden="true">
-    <img id="fullMap4" src="4.png" alt="the fullmap 4096" naturalHeight='4096' naturalWidth="4096" height="2048" width="2048" hidden="true" />
-    <img id="fullMap" src="3.png" alt="the fullmap" hidden="true" />
+    <canvas id="canvasX" width="46" height="56" hidden="true"></canvas>
+    <img id="fullMap4" src="4.png" alt="the fullmap 4096" naturalHeight='4096' naturalWidth="4096" height="2048"
+      width="2048" hidden="true" />
+    <img id="fullMap" src="3.png" alt="the fullmap" naturalHeight='2048' naturalWidth="2048" hidden="true" />
     <img id="xxx" src="x.png" alt="the x" hidden="true" />
   </div>
   <script type="text/javascript">
 
 
     document.addEventListener("paste", pasteImage);
+    window.addEventListener("resize", reportWindowSize);
+
+
     const canvasOutput = document.querySelector("#canvasOutput");
     const canvasCroppedTm = document.querySelector("#canvasCroppedTm");
     const canvasX = document.querySelector("#canvasX");
     const canvasFinalOutput = document.querySelector("#canvasFinalOutput");
-    const offscreen = new OffscreenCanvas(4096, 4096);
-    const oSContext = offscreen.getContext("2d");
     //querySelector is faster? //document.getElementsByClassName("canvasOutput");
 
-    const ctxF = canvasFinalOutput.getContext('2d');
-    const cTX = canvasOutput.getContext('2d');
-    const xContext = canvasX.getContext('2d');
-    const ctxCroppedMap = canvasCroppedTm.getContext('2d');
+    const offscreen = new OffscreenCanvas(4096, 4096);
+    const oSContext = offscreen.getContext("2d");
+    oSContext.drawImage(fullMap4,0,0);
+    const offscreenInputCan = new OffscreenCanvas(4096, 4096);
+    const oSContextInputCan = offscreenInputCan.getContext("2d");
 
+    const ctxF = canvasFinalOutput.getContext('2d', { willReadFrequently: true });
+    //ctxF.putImageData('fullMap', 0, 0);
+
+    const cTX = canvasOutput.getContext('2d', { willReadFrequently: true });
+    const xContext = canvasX.getContext('2d', { willReadFrequently: true });
+    const ctxCroppedMap = canvasCroppedTm.getContext('2d', { willReadFrequently: true });
+
+
+    function reportWindowSize() {
+      //canvasFinalOutput.height = window.outerHeight;
+      //console.log('window.innerHeight', window.innerHeight, 'canvasFinalOutput.height', canvasFinalOutput.height);
+      console.log('window.outerHeight', window.outerHeight, '  window.outerWidth ', window.outerWidth);
+      //canvasFinalOutput.width = window.outerWidth;
+      //console.log('window.innerWidth', window.innerWidth, 'canvasFinalOutput.width', canvasFinalOutput.width);
+    }
 
     async function pasteImage() {
 
-      ctxF.clearRect(0, 0, canvasFinalOutput.width, canvasFinalOutput.height);
+      //ctxF.clearRect(0, 0, canvasFinalOutput.width, canvasFinalOutput.height);
       cTX.clearRect(0, 0, canvasOutput.width, canvasOutput.height);
       ctxCroppedMap.clearRect(0, 0, canvasCroppedTm.width, canvasCroppedTm.height);
 
-      let xContext = canvasX.getContext('2d');
       xContext.drawImage(xxx, 0, 0);
-
-
+      ctxF.drawImage(fullMap, 0, 0);
 
       try {
         const permission = await navigator.permissions.query({
@@ -77,7 +91,6 @@
     async function handleImg(blob) {
       let imgPaste = await createImageBitmap(blob);
       cTX.drawImage(imgPaste, 0, 0);
-
       //canvasOutput.removeAttribute("hidden");
 
       let src = cv.imread('canvasOutput', cv.IMREAD_GRAYSCALE);
@@ -90,16 +103,15 @@
       let point = new cv.Point(maxPoint.x + templ.cols, maxPoint.y + templ.rows);
       console.log(maxPoint.x, maxPoint.y, point.x, point.y);
       cv.imshow('canvasOutput', src);
-      
-      let dst2 = new cv.Mat();
-      let rect = new cv.Rect(maxPoint.x - 100, maxPoint.y - 100, 250, 250);
-      dst2 = src.roi(rect);
-      cv.imshow('canvasCroppedTm', dst2);
+
+      let trimdInput = new cv.Mat();
+      let rect = new cv.Rect(maxPoint.x - 95, maxPoint.y - 94, 245, 245);
+      trimdInput = src.roi(rect);
+      cv.imshow('canvasCroppedTm', trimdInput);
+
+      src.delete(); trimdInput.delete(); templ.delete(); dst.delete(); mask.delete();
 
 
-      src.delete(); dst2.delete(); templ.delete(); dst.delete(); mask.delete();
-
-      ctxF.drawImage(fullMap, 0, 0);
       let srcF = cv.imread('canvasFinalOutput', cv.IMREAD_GRAYSCALE);
       //canvasOutput.setAttribute("hidden", "hidden");
       let templTrimmedMap = cv.imread('canvasCroppedTm', cv.IMREAD_GRAYSCALE);
@@ -110,20 +122,27 @@
       let dstFinal = new cv.Mat();
       let maskFinal = new cv.Mat();
       cv.matchTemplate(srcF, templShrunk, dstFinal, cv.TM_CCOEFF_NORMED, maskFinal);
+
       let resultF = cv.minMaxLoc(dstFinal, maskFinal);
       let maxPF = resultF.maxLoc;
-      let pointF = new cv.Point(maxPF.x + templShrunk.cols*1.3, maxPF.y + templShrunk.rows*1.3);
-      //console.log(maxPF.x, maxPF.y, pointF.x, pointF.y);
+
+      let pointF = new cv.Point(maxPF.x + templShrunk.cols * 1.3, maxPF.y + templShrunk.rows * 1.3);
+      console.log('final',maxPF.x, maxPF.y, pointF.x, pointF.y);
 
       let color = new cv.Scalar(255, 0, 0, 255);
       cv.rectangle(srcF, maxPF, pointF, color, 4, cv.LINE_8, 0);
-
+//      oSContext.rect(maxPF.x*2,maxPF.y*2,50,50)
       cv.imshow('canvasFinalOutput', srcF);
 
+      /* 
+            const imgFinal = document.createElement("img"); // Use DOM HTMLImageElement
+            imgFinal.src = canvasFinalOutput.toDataURL();
+            imgFinal.alt = "final output";
+            imgFinal.naturalHeight=2048;
+            imgFinal.naturalWidth=2048;
+            document.body.appendChild(imgFinal);
+       */
       dstFinal.delete(); maskFinal.delete(); srcF.delete(); templShrunk.delete(); templTrimmedMap.delete();
-
-
-
 
     }
 

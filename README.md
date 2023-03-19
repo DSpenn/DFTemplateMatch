@@ -18,6 +18,12 @@
 -maps scaled for 6 
         260x260ish with border
         250x250
+        249x250  some black
+        244x247
+        244x244 *?
+        243x242
+        242x241
+        233x239
         239x236?
 
 
