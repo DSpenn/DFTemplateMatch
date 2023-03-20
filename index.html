@@ -73,7 +73,7 @@
 </div>
 
 
-<div><span style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776; open</span>
+<div><span style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776; </span>
   <p id="status">OpenCV.js is loading...</p>
 </div>
 <div id="main">
@@ -118,8 +118,8 @@
   }
 
   function clickedMenuImage(e) {
-    console.log(e.target.getAttribute("mxx"));
-    console.log(e.target.getAttribute("mY"));
+    //console.log(e.target.getAttribute("mxx"));
+    //console.log(e.target.getAttribute("mY"));
     var c = document.getElementById("canvasFinalOutput");
     var ctx = c.getContext("2d");
     ctx.beginPath();
