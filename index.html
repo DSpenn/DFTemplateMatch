@@ -77,24 +77,22 @@
   <p id="status">OpenCV.js is loading...</p>
 </div>
 <div id="main">
-  <div> <canvas id="canvasCroppedTm" width="256" height="256" hidden="true"></canvas> </div>
+  <canvas id="canvasOutputTest" width="50" height="50" hidden="true" ></canvas>
+  <div> <canvas id="canvasCroppedTm" width="256" height="256" hidden="true" ></canvas> </div>
   <canvas id="canvasFinalOutput" width="2048" height="2048" display="block"></canvas>
 </div>
 <div>
   <canvas id="canvasOutput" width="1920" height="1080" hidden="true"></canvas>
 </div>
 <div hidden="true">
-  <canvas id="canvasX" width="46" height="56" hidden="true"></canvas>
-  <img id="fullMap4" src="4.png" alt="the fullmap 4096" naturalHeight='4096' naturalWidth="4096" height="2048"
-    width="2048" hidden="true" />
+  <canvas id="canvasX" width="40" height="40" hidden="true"></canvas>
   <img id="fullMap" src="3.png" alt="the fullmap" naturalHeight='2048' naturalWidth="2048" hidden="true" />
   <img id="xxx" src="x.png" alt="the x" hidden="true" />
+  <img id="anotherX" src="x2.png" alt="the x2" hidden="true" />
 </div>
 <script type="text/javascript">
 
-
   const menu = document.getElementById("mySidenav")
-
   function openNav() {
     document.getElementById("mySidenav").style.width = "250px";
     document.getElementById("main").style.marginLeft = "250px";
@@ -132,7 +130,7 @@
   }
 
   document.addEventListener("paste", pasteImage);
-  window.addEventListener("resize", reportWindowSize);
+  //window.addEventListener("resize", reportWindowSize);
 
 
   const canvasOutput = document.querySelector("#canvasOutput");
@@ -141,11 +139,11 @@
   const canvasFinalOutput = document.querySelector("#canvasFinalOutput");
   //querySelector is faster? //document.getElementsByClassName("canvasOutput");
 
-  const offscreen = new OffscreenCanvas(4096, 4096);
-  const oSContext = offscreen.getContext("2d");
-  oSContext.drawImage(fullMap4, 0, 0);
-  const offscreenInputCan = new OffscreenCanvas(4096, 4096);
-  const oSContextInputCan = offscreenInputCan.getContext("2d");
+  //const offscreen = new OffscreenCanvas(4096, 4096);
+  //const oSContext = offscreen.getContext("2d");
+  //oSContext.drawImage(fullMap4, 0, 0);
+  //const offscreenInputCan = new OffscreenCanvas(4096, 4096);
+  //const oSContextInputCan = offscreenInputCan.getContext("2d");
 
   const ctxF = canvasFinalOutput.getContext('2d', { willReadFrequently: true });
   //ctxF.putImageData('fullMap', 0, 0);
@@ -155,13 +153,13 @@
   const ctxCroppedMap = canvasCroppedTm.getContext('2d', { willReadFrequently: true });
 
 
-  function reportWindowSize() {
-    //canvasFinalOutput.height = window.outerHeight;
-    //console.log('window.innerHeight', window.innerHeight, 'canvasFinalOutput.height', canvasFinalOutput.height);
-    console.log('window.outerHeight', window.outerHeight, '  window.outerWidth ', window.outerWidth);
-    //canvasFinalOutput.width = window.outerWidth;
-    //console.log('window.innerWidth', window.innerWidth, 'canvasFinalOutput.width', canvasFinalOutput.width);
-  }
+  /*   function reportWindowSize() {
+      //canvasFinalOutput.height = window.outerHeight;
+      //console.log('window.innerHeight', window.innerHeight, 'canvasFinalOutput.height', canvasFinalOutput.height);
+      console.log('window.outerHeight', window.outerHeight, '  window.outerWidth ', window.outerWidth);
+      //canvasFinalOutput.width = window.outerWidth;
+      //console.log('window.innerWidth', window.innerWidth, 'canvasFinalOutput.width', canvasFinalOutput.width);
+    } */
 
   async function pasteImage() {
 
@@ -188,6 +186,7 @@
         await handleImg(blob);
       }
     } catch (error) {
+      console.log(error);
       console.error(error.message);
     }
   }
@@ -205,11 +204,13 @@
     let result = cv.minMaxLoc(dst, mask);
     let maxPoint = result.maxLoc;
     let point = new cv.Point(maxPoint.x + templ.cols, maxPoint.y + templ.rows);
-    console.log(maxPoint.x, maxPoint.y, point.x, point.y);
+    //console.log(maxPoint.x, maxPoint.y, point.x, point.y);
     cv.imshow('canvasOutput', src);
 
     let trimdInput = new cv.Mat();
-    let rect = new cv.Rect(maxPoint.x - 95, maxPoint.y - 94, 245, 245);
+    //let rect = new cv.Rect(maxPoint.x - 97, maxPoint.y - 97, 245, 245);
+    //    let rect = new cv.Rect(maxPoint.x - 95, maxPoint.y - 95, 240, 240);
+    let rect = new cv.Rect(maxPoint.x - 98, maxPoint.y - 98, 246, 246);
     trimdInput = src.roi(rect);
     cv.imshow('canvasCroppedTm', trimdInput);
     addImgToMenu();
@@ -220,21 +221,29 @@
     //canvasOutput.setAttribute("hidden", "hidden");
     let templTrimmedMap = cv.imread('canvasCroppedTm', cv.IMREAD_GRAYSCALE);
     let templShrunk = new cv.Mat();
-    let dsize = new cv.Size(31, 31);
+    let dsize = new cv.Size(canvasCroppedTm.height/7.5, canvasCroppedTm.width/7.5);
+    //let dsize = new cv.Size(40,40);
+    //console.log(canvasCroppedTm.height/7.5, canvasCroppedTm.width/7.5);
     cv.resize(templTrimmedMap, templShrunk, dsize, 0, 0, cv.INTER_AREA);
-
+    //cv.imshow('canvasOutputTest', templShrunk);
     let dstFinal = new cv.Mat();
     let maskFinal = new cv.Mat();
     cv.matchTemplate(srcF, templShrunk, dstFinal, cv.TM_CCOEFF_NORMED, maskFinal);
+    //console.log('maskFinal',maskFinal);
 
     let resultF = cv.minMaxLoc(dstFinal, maskFinal);
     let maxPF = resultF.maxLoc;
 
-    let pointF = new cv.Point(maxPF.x + templShrunk.cols * 1.3, maxPF.y + templShrunk.rows * 1.3);
+    let pointF = new cv.Point(maxPF.x + templShrunk.cols * 1, maxPF.y + templShrunk.rows * 1);
     console.log('final', maxPF.x, maxPF.y, pointF.x, pointF.y);
 
+    let midY = (pointF.y + maxPF.y) / 2;
+    let midX = (pointF.x + maxPF.x) / 2;
+    console.log('x', midX, (pointF.x + maxPF.x) / 2);
+    console.log('midY', midY, (pointF.y + maxPF.y) / 2);
+    //console.log('x tile', midX, midX*8);
+    //console.log('y tile', midY, midY*8);
     let currImg = document.getElementById(`${menu.childElementCount - 1}`);
-    console.log('currImg', currImg);
     currImg.setAttribute('mxx', maxPF.x);
     currImg.setAttribute('mY', maxPF.y);
     currImg.setAttribute('pX', pointF.x);
@@ -243,14 +252,23 @@
 
     let color = new cv.Scalar(255, 0, 0, 255);
     cv.rectangle(srcF, maxPF, pointF, color, 4, cv.LINE_8, 0);
-    //oSContext.strokeRect(maxPF.x * 2, maxPF.y * 2, 50, 50);
-    //oSContext.rect(maxPF.x * 2, maxPF.y * 2, 50, 50);
     cv.imshow('canvasFinalOutput', srcF);
 
     dstFinal.delete(); maskFinal.delete(); srcF.delete(); templShrunk.delete(); templTrimmedMap.delete();
 
-  }
 
+/*     for (let x = 0; x < canvasFinalOutput.width; x += 51.2) {
+      ctxF.moveTo(x, 0);
+      ctxF.lineTo(x, canvasFinalOutput.height);
+    }
+    for (let y = 0; y < canvasFinalOutput.height; y += 51.2) {
+      ctxF.moveTo(0, y);
+      ctxF.lineTo(canvasFinalOutput.width, y);
+    }
+    ctxF.strokeStyle = "#ddd";
+    ctxF.stroke();
+ */
+  }
 
   const Module = {
     onRuntimeInitialized() {
