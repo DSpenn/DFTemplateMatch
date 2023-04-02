@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Hello OpenCV.js</title>
+</head>
+
+<style>
+  body,
+  html {
+    height: 100%;
+    margin: 0;
+  }
+
+  .responsive {
+    width: 100%;
+    height: auto;
+  }
+
+  .sidenav {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    background-color: #111;
+    overflow-x: hidden;
+    transition: 0.2s;
+    padding-top: 60px;
+  }
+
+  .sidenav a {
+    padding: 8px 8px 8px 32px;
+    text-decoration: none;
+    font-size: 25px;
+    color: #818181;
+    display: block;
+    transition: 0.2s;
+  }
+
+  .sidenav a:hover {
+    color: #f1f1f1;
+  }
+
+  .sidenav .closebtn {
+    position: absolute;
+    top: 0;
+    right: 25px;
+    font-size: 36px;
+    margin-left: 50px;
+  }
+
+  #main {
+    transition: margin-left .5s;
+    padding: 16px;
+  }
+
+  @media screen and (max-height: 450px) {
+    .sidenav {
+      padding-top: 15px;
+    }
+
+    .sidenav a {
+      font-size: 18px;
+    }
+  }
+</style>
+
+<body>
+  <h2>Hello OpenCV.js</h2>
+  <p id="status">OpenCV.js is loading...</p>
+  <div id="main">
+    <canvas id="canvasFinalOutput" width="2048" height="2048"></canvas>
+  </div>
+  <div>
+  </div>
+  <div id="appe" width="2048" height="2048"></div>
+
+  </div>
+  <script type="text/javascript">
+    const canvasFinal = document.querySelector("#canvasFinalOutput");
+    const ctxF = canvasFinal.getContext('2d', { willReadFrequently: true });
+    const Arr = [];
+
+
+    for (var x = 0; x < 8; x++) {
+      for (var y = 0; y < 8; y++) {
+        Arr.push((`./tiles/3/3_${x}_${y}.jpg`));
+      }
+    }
+    console.log(Arr);
+
+
+    const toAddTo = document.getElementById("appe");
+    let xx = 0;
+    let yy = 0;
+    for (let index = 0; index < Arr.length; index++) {
+      const mImg = new Image(256, 256); // Image constructor
+      mImg.src = Arr[index];
+      //document.body.appendChild(img1);
+
+      mImg.id = `${xx}, ${yy}`;
+      mImg.name = index;
+      //console.log(mImg.src);
+      mImg.naturalHeight = 256;
+      mImg.naturalWidth = 256;
+      //mImg.onload = drawImageF; 
+
+
+      toAddTo.appendChild(mImg);
+      if (yy == 7) {
+        xx++;
+        yy = 0;
+      } else {
+        yy++;
+      }
+
+      mImg.addEventListener("load", function () {
+        let newY = Number((mImg.id).at(-1)) * 256;
+        let newX = Number((mImg.id).at(0)) * 256;
+        console.log('newX',newX,'newY',newY,mImg.id);
+        ctxF.drawImage(mImg, newX, newY, mImg.width, mImg.height);
+   });
+
+
+      //ctxF.drawImage(mImg, xx * 256, yy * 256, 256, 256);
+
+    }
+
+
+ /*    let xxx = 0;
+    let newX = 0;
+    let newY = 0;
+    for (const image of document.images) {
+      if (image.src !== "3.png") {
+        console.log(image);
+        ctxF.drawImage(image, newX, newY);
+
+      }
+    } */
+
+
+
+/*     for (let xxx = 0; xxx < 64; xxx++) {
+      const aImg = document.getElementsByName(xxx);
+      console.log(aImg);
+      ctxF.drawImage(aImg, xxx * 256, xxx * 256, 256, 256);
+    }
+ */
+
+    /*     const myNodeList = document.querySelectorAll("img");
+        console.log(myNodelist.length); */
+
+
+
+
+
+
+
+    function onOpenCvReady() {
+      document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+    }
+
+  </script>
+
+  <script async src="opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+</body>
+
+</html>

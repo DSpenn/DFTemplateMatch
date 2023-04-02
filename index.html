@@ -77,22 +77,38 @@
   <p id="status">OpenCV.js is loading...</p>
 </div>
 <div id="main">
-  <canvas id="canvasOutputTest" width="50" height="50" hidden="true" ></canvas>
-  <div> <canvas id="canvasCroppedTm" width="256" height="256" hidden="true" ></canvas> </div>
-  <canvas id="canvasFinalOutput" width="2048" height="2048" display="block"></canvas>
+  <canvas id="canvasOutputTest" width="100" height="100" hidden="true"></canvas>
+  <div> <canvas id="canvasCroppedTm" width="255" height="255" hidden="true"></canvas> </div>
+  <canvas id="canvasFinalOutput" width="4096" height="4096" display="block"></canvas>
 </div>
 <div>
   <canvas id="canvasOutput" width="1920" height="1080" hidden="true"></canvas>
 </div>
 <div hidden="true">
   <canvas id="canvasX" width="40" height="40" hidden="true"></canvas>
-  <img id="fullMap" src="3.png" alt="the fullmap" naturalHeight='2048' naturalWidth="2048" hidden="true" />
+  <img id="fullMapBig" src="./c/4.png" alt="the fullMapBig" hidden="true" onload="itLoaded()" />
   <img id="xxx" src="x.png" alt="the x" hidden="true" />
-  <img id="anotherX" src="x2.png" alt="the x2" hidden="true" />
 </div>
 <script type="text/javascript">
 
   const menu = document.getElementById("mySidenav")
+
+  const canvasOutput = document.querySelector("#canvasOutput");
+  const canvasCroppedTm = document.querySelector("#canvasCroppedTm");
+  const canvasX = document.querySelector("#canvasX");
+  const canvasFinalOutput = document.querySelector("#canvasFinalOutput");
+
+  const ctxF = canvasFinalOutput.getContext('2d', { willReadFrequently: true });
+
+  const cTX = canvasOutput.getContext('2d', { willReadFrequently: true });
+  const xContext = canvasX.getContext('2d', { willReadFrequently: true });
+  const ctxCroppedMap = canvasCroppedTm.getContext('2d', { willReadFrequently: true });
+
+
+  function itLoaded() {
+    ctxF.drawImage(fullMapBig, 0, 0);
+  }
+
   function openNav() {
     document.getElementById("mySidenav").style.width = "250px";
     document.getElementById("main").style.marginLeft = "250px";
@@ -118,8 +134,8 @@
   function clickedMenuImage(e) {
     //console.log(e.target.getAttribute("mxx"));
     //console.log(e.target.getAttribute("mY"));
-    var c = document.getElementById("canvasFinalOutput");
-    var ctx = c.getContext("2d");
+    let c = document.getElementById("canvasFinalOutput");
+    let ctx = c.getContext("2d");
     ctx.beginPath();
     ctx.lineWidth = "10";
     ctx.strokeStyle = "blue";
@@ -130,45 +146,14 @@
   }
 
   document.addEventListener("paste", pasteImage);
-  //window.addEventListener("resize", reportWindowSize);
-
-
-  const canvasOutput = document.querySelector("#canvasOutput");
-  const canvasCroppedTm = document.querySelector("#canvasCroppedTm");
-  const canvasX = document.querySelector("#canvasX");
-  const canvasFinalOutput = document.querySelector("#canvasFinalOutput");
-  //querySelector is faster? //document.getElementsByClassName("canvasOutput");
-
-  //const offscreen = new OffscreenCanvas(4096, 4096);
-  //const oSContext = offscreen.getContext("2d");
-  //oSContext.drawImage(fullMap4, 0, 0);
-  //const offscreenInputCan = new OffscreenCanvas(4096, 4096);
-  //const oSContextInputCan = offscreenInputCan.getContext("2d");
-
-  const ctxF = canvasFinalOutput.getContext('2d', { willReadFrequently: true });
-  //ctxF.putImageData('fullMap', 0, 0);
-
-  const cTX = canvasOutput.getContext('2d', { willReadFrequently: true });
-  const xContext = canvasX.getContext('2d', { willReadFrequently: true });
-  const ctxCroppedMap = canvasCroppedTm.getContext('2d', { willReadFrequently: true });
-
-
-  /*   function reportWindowSize() {
-      //canvasFinalOutput.height = window.outerHeight;
-      //console.log('window.innerHeight', window.innerHeight, 'canvasFinalOutput.height', canvasFinalOutput.height);
-      console.log('window.outerHeight', window.outerHeight, '  window.outerWidth ', window.outerWidth);
-      //canvasFinalOutput.width = window.outerWidth;
-      //console.log('window.innerWidth', window.innerWidth, 'canvasFinalOutput.width', canvasFinalOutput.width);
-    } */
 
   async function pasteImage() {
-
     //ctxF.clearRect(0, 0, canvasFinalOutput.width, canvasFinalOutput.height);
     cTX.clearRect(0, 0, canvasOutput.width, canvasOutput.height);
     ctxCroppedMap.clearRect(0, 0, canvasCroppedTm.width, canvasCroppedTm.height);
 
     xContext.drawImage(xxx, 0, 0);
-    ctxF.drawImage(fullMap, 0, 0);
+    ctxF.drawImage(fullMapBig, 0, 0);
 
     try {
       const permission = await navigator.permissions.query({
@@ -187,6 +172,7 @@
       }
     } catch (error) {
       console.log(error);
+      console.log(cv.exceptionFromPtr(error).msg);
       console.error(error.message);
     }
   }
@@ -199,9 +185,9 @@
     let src = cv.imread('canvasOutput', cv.IMREAD_GRAYSCALE);
     let templ = cv.imread('canvasX', cv.IMREAD_GRAYSCALE);
     let dst = new cv.Mat();
-    let mask = new cv.Mat();
-    cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF_NORMED, mask);
-    let result = cv.minMaxLoc(dst, mask);
+    //let mask = new cv.Mat();
+    cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF_NORMED);
+    let result = cv.minMaxLoc(dst);
     let maxPoint = result.maxLoc;
     let point = new cv.Point(maxPoint.x + templ.cols, maxPoint.y + templ.rows);
     //console.log(maxPoint.x, maxPoint.y, point.x, point.y);
@@ -209,27 +195,40 @@
 
     let trimdInput = new cv.Mat();
     //let rect = new cv.Rect(maxPoint.x - 97, maxPoint.y - 97, 245, 245);
-    //    let rect = new cv.Rect(maxPoint.x - 95, maxPoint.y - 95, 240, 240);
-    let rect = new cv.Rect(maxPoint.x - 98, maxPoint.y - 98, 246, 246);
+    //let rect = new cv.Rect(maxPoint.x - 98, maxPoint.y - 98, 246, 246);
+    let rect = new cv.Rect(maxPoint.x - 94, maxPoint.y - 95, 242, 242);
     trimdInput = src.roi(rect);
     cv.imshow('canvasCroppedTm', trimdInput);
     addImgToMenu();
-    src.delete(); trimdInput.delete(); templ.delete(); dst.delete(); mask.delete();
+
+    src.delete(); trimdInput.delete(); templ.delete(); dst.delete();
+    //mask.delete();
 
 
-    let srcF = cv.imread('canvasFinalOutput', cv.IMREAD_GRAYSCALE);
+    let srcFI = cv.imread(canvasFinalOutput);
+    let srcF = new cv.Mat();
+    cv.cvtColor(srcFI, srcF, cv.COLOR_RGBA2GRAY, 0);
+
+
+
     //canvasOutput.setAttribute("hidden", "hidden");
-    let templTrimmedMap = cv.imread('canvasCroppedTm', cv.IMREAD_GRAYSCALE);
+
+    let templTrimmedMapI = cv.imread('canvasCroppedTm');
+    let templTrimmedMap = new cv.Mat();
+    cv.cvtColor(templTrimmedMapI, templTrimmedMap, cv.COLOR_RGBA2GRAY, 0);
+
+
+
+
     let templShrunk = new cv.Mat();
-    let dsize = new cv.Size(canvasCroppedTm.height/7.5, canvasCroppedTm.width/7.5);
+    let dsize = new cv.Size(canvasCroppedTm.height * .25, canvasCroppedTm.width * .25);
     //let dsize = new cv.Size(40,40);
-    //console.log(canvasCroppedTm.height/7.5, canvasCroppedTm.width/7.5);
+    console.log(canvasCroppedTm.height * .25, canvasCroppedTm.width * .25);
     cv.resize(templTrimmedMap, templShrunk, dsize, 0, 0, cv.INTER_AREA);
-    //cv.imshow('canvasOutputTest', templShrunk);
+    cv.imshow('canvasOutputTest', templShrunk);
     let dstFinal = new cv.Mat();
     let maskFinal = new cv.Mat();
     cv.matchTemplate(srcF, templShrunk, dstFinal, cv.TM_CCOEFF_NORMED, maskFinal);
-    //console.log('maskFinal',maskFinal);
 
     let resultF = cv.minMaxLoc(dstFinal, maskFinal);
     let maxPF = resultF.maxLoc;
@@ -241,8 +240,9 @@
     let midX = (pointF.x + maxPF.x) / 2;
     console.log('x', midX, (pointF.x + maxPF.x) / 2);
     console.log('midY', midY, (pointF.y + maxPF.y) / 2);
-    //console.log('x tile', midX, midX*8);
-    //console.log('y tile', midY, midY*8);
+    //console.log('x tile', midX/256);
+    //console.log('y tile', midY/256);
+    console.log('tile 4# ', Math.floor((midX) / 256), Math.floor((midY) / 256));
     let currImg = document.getElementById(`${menu.childElementCount - 1}`);
     currImg.setAttribute('mxx', maxPF.x);
     currImg.setAttribute('mY', maxPF.y);
@@ -250,34 +250,48 @@
     currImg.setAttribute('pY', pointF.y);
 
 
-    let color = new cv.Scalar(255, 0, 0, 255);
-    cv.rectangle(srcF, maxPF, pointF, color, 4, cv.LINE_8, 0);
-    cv.imshow('canvasFinalOutput', srcF);
+    //let color = new cv.Scalar(255, 0, 0, 255);
+    //cv.rectangle(srcF, maxPF, pointF, color, 4, cv.LINE_8, 0);
+    //oSContext.strokeRect(maxPF.x * 2, maxPF.y * 2, 50, 50);
+    //oSContext.rect(maxPF.x * 2, maxPF.y * 2, 50, 50);
+    //cv.imshow('canvasFinalOutput', srcF);
 
-    dstFinal.delete(); maskFinal.delete(); srcF.delete(); templShrunk.delete(); templTrimmedMap.delete();
-
-
-/*     for (let x = 0; x < canvasFinalOutput.width; x += 51.2) {
-      ctxF.moveTo(x, 0);
-      ctxF.lineTo(x, canvasFinalOutput.height);
-    }
-    for (let y = 0; y < canvasFinalOutput.height; y += 51.2) {
-      ctxF.moveTo(0, y);
-      ctxF.lineTo(canvasFinalOutput.width, y);
-    }
-    ctxF.strokeStyle = "#ddd";
+    ctxF.beginPath();
+    ctxF.lineWidth = "10";
+    ctxF.strokeStyle = "red";
+    //rect(x, y, width, height)
+    ctxF.rect(pointF.x, pointF.y, maxPF.x - pointF.x, maxPF.y - pointF.y);
     ctxF.stroke();
- */
+
+
+
+
+    dstFinal.delete(); srcF.delete(); templShrunk.delete(); templTrimmedMap.delete(); srcFI.delete();
+    templTrimmedMapI.delete(); maskFinal.delete();
+
+
+    /*     for (var x = 1; x < canvasFinalOutput.width; x += 51.2) {
+          ctxF.moveTo(x, 0);
+          ctxF.lineTo(x, canvasFinalOutput.height);
+        }
+        for (var y = 1; y < canvasFinalOutput.height; y += 51.2) {
+          ctxF.moveTo(0, y);
+          ctxF.lineTo(canvasFinalOutput.width, y);
+        }
+        ctxF.strokeStyle = "#ddd";
+        ctxF.stroke(); */
+
   }
 
   const Module = {
     onRuntimeInitialized() {
-      document.getElementById('status').innerHTML = 'OpenCV.js is ready.';
+      document.getElementById('status').innerHTML = '';
     }
   };
 
 </script>
 <script async src="opencv.js" type="text/javascript"></script>
+<script async src="utils.js" type="text/javascript"></script>
 </body>
 
 </html>
