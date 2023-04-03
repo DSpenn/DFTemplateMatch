@@ -65,11 +65,22 @@
       font-size: 18px;
     }
   }
-</style>
 
+  .container {
+    position: relative;
+    text-align: center;
+    color: white;
+  }
+
+  .centered {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+</style>
 <div id="mySidenav" class="sidenav">
   <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-
 </div>
 
 
@@ -78,17 +89,17 @@
 </div>
 <div id="main">
   <canvas id="canvasOutputTest" width="100" height="100" hidden="true"></canvas>
-  <div> <canvas id="canvasCroppedTm" width="255" height="255" hidden="true"></canvas> </div>
+  <canvas id="canvasCroppedTm" width="256" height="256" hidden="true"></canvas>
   <canvas id="canvasFinalOutput" width="4096" height="4096" display="block"></canvas>
 </div>
 <div>
   <canvas id="canvasOutput" width="1920" height="1080" hidden="true"></canvas>
 </div>
-<div hidden="true">
+<footer hidden="true">
   <canvas id="canvasX" width="40" height="40" hidden="true"></canvas>
-  <img id="fullMapBig" src="./c/4.png" alt="the fullMapBig" hidden="true" onload="itLoaded()" />
+  <img id="fullMapBig" src="./44.png" alt="the fullMapBig" hidden="true" onload="itLoaded()" />
   <img id="xxx" src="x.png" alt="the x" hidden="true" />
-</div>
+</footer>
 <script type="text/javascript">
 
   const menu = document.getElementById("mySidenav")
@@ -101,12 +112,13 @@
   const ctxF = canvasFinalOutput.getContext('2d', { willReadFrequently: true });
 
   const cTX = canvasOutput.getContext('2d', { willReadFrequently: true });
-  const xContext = canvasX.getContext('2d', { willReadFrequently: true });
+  const xContext = canvasX.getContext('2d');
   const ctxCroppedMap = canvasCroppedTm.getContext('2d', { willReadFrequently: true });
 
 
   function itLoaded() {
     ctxF.drawImage(fullMapBig, 0, 0);
+    xContext.drawImage(xxx, 0, 0);
   }
 
   function openNav() {
@@ -120,6 +132,10 @@
   }
 
   function addImgToMenu() {
+
+
+    let cont = document.createElement('div')
+    cont.classList.add('container');
     let menuImg = document.createElement("img"); // Use DOM HTMLImageElement
     menuImg.addEventListener("click", clickedMenuImage)
     menuImg.src = canvasCroppedTm.toDataURL();
@@ -128,21 +144,25 @@
     menuImg.id = `${menu.childElementCount}`;
     menuImg.naturalHeight = 250;
     menuImg.naturalWidth = 250;
-    menu.appendChild(menuImg);
+    cont.appendChild(menuImg);
+
+    let cIText = document.createElement('p')
+    cIText.classList.add('centered');
+    cIText.innerText = "blah";
+    cont.appendChild(cIText);
+
+    menu.appendChild(cont);
   }
 
   function clickedMenuImage(e) {
     //console.log(e.target.getAttribute("mxx"));
     //console.log(e.target.getAttribute("mY"));
-    let c = document.getElementById("canvasFinalOutput");
-    let ctx = c.getContext("2d");
-    ctx.beginPath();
-    ctx.lineWidth = "10";
-    ctx.strokeStyle = "blue";
-    ctx.rect(e.target.getAttribute("mxx"), e.target.getAttribute("mY"), 44, 43);
-    ctx.stroke();
+    ctxF.beginPath();
+    ctxF.lineWidth = "10";
+    ctxF.strokeStyle = "blue";
+    ctxF.rect(e.target.getAttribute("mxx"), e.target.getAttribute("mY"), 44, 43);
+    ctxF.stroke();
     //data-m-x="1795" data-m-y="197" data-p-x="1835.3" data-p-y="237.3">
-
   }
 
   document.addEventListener("paste", pasteImage);
@@ -151,8 +171,6 @@
     //ctxF.clearRect(0, 0, canvasFinalOutput.width, canvasFinalOutput.height);
     cTX.clearRect(0, 0, canvasOutput.width, canvasOutput.height);
     ctxCroppedMap.clearRect(0, 0, canvasCroppedTm.width, canvasCroppedTm.height);
-
-    xContext.drawImage(xxx, 0, 0);
     ctxF.drawImage(fullMapBig, 0, 0);
 
     try {
@@ -180,36 +198,33 @@
   async function handleImg(blob) {
     let imgPaste = await createImageBitmap(blob);
     cTX.drawImage(imgPaste, 0, 0);
-    //canvasOutput.removeAttribute("hidden");
 
     let src = cv.imread('canvasOutput', cv.IMREAD_GRAYSCALE);
     let templ = cv.imread('canvasX', cv.IMREAD_GRAYSCALE);
     let dst = new cv.Mat();
-    //let mask = new cv.Mat();
-    cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF_NORMED);
+    let mask = new cv.Mat();
+    cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF_NORMED, mask);
     let result = cv.minMaxLoc(dst);
     let maxPoint = result.maxLoc;
+    //console.log('maxPoint input',maxPoint);
     let point = new cv.Point(maxPoint.x + templ.cols, maxPoint.y + templ.rows);
     //console.log(maxPoint.x, maxPoint.y, point.x, point.y);
     cv.imshow('canvasOutput', src);
 
     let trimdInput = new cv.Mat();
-    //let rect = new cv.Rect(maxPoint.x - 97, maxPoint.y - 97, 245, 245);
-    //let rect = new cv.Rect(maxPoint.x - 98, maxPoint.y - 98, 246, 246);
-    let rect = new cv.Rect(maxPoint.x - 94, maxPoint.y - 95, 242, 242);
+    //let rect = new cv.Rect(maxPoint.x - 93, maxPoint.y - 96, 242, 242);
+    let rect = new cv.Rect(maxPoint.x - 98, maxPoint.y - 98, 248, 248);
+    //    let rect = new cv.Rect(maxPoint.x - 94, maxPoint.y - 95, 242, 242);
     trimdInput = src.roi(rect);
     cv.imshow('canvasCroppedTm', trimdInput);
     addImgToMenu();
 
-    src.delete(); trimdInput.delete(); templ.delete(); dst.delete();
-    //mask.delete();
+    src.delete(); trimdInput.delete(); templ.delete(); dst.delete(); mask.delete();
 
 
     let srcFI = cv.imread(canvasFinalOutput);
     let srcF = new cv.Mat();
     cv.cvtColor(srcFI, srcF, cv.COLOR_RGBA2GRAY, 0);
-
-
 
     //canvasOutput.setAttribute("hidden", "hidden");
 
@@ -217,13 +232,10 @@
     let templTrimmedMap = new cv.Mat();
     cv.cvtColor(templTrimmedMapI, templTrimmedMap, cv.COLOR_RGBA2GRAY, 0);
 
-
-
-
     let templShrunk = new cv.Mat();
     let dsize = new cv.Size(canvasCroppedTm.height * .25, canvasCroppedTm.width * .25);
     //let dsize = new cv.Size(40,40);
-    console.log(canvasCroppedTm.height * .25, canvasCroppedTm.width * .25);
+    //console.log(canvasCroppedTm.height * .25, canvasCroppedTm.width * .25);
     cv.resize(templTrimmedMap, templShrunk, dsize, 0, 0, cv.INTER_AREA);
     cv.imshow('canvasOutputTest', templShrunk);
     let dstFinal = new cv.Mat();
@@ -234,27 +246,64 @@
     let maxPF = resultF.maxLoc;
 
     let pointF = new cv.Point(maxPF.x + templShrunk.cols * 1, maxPF.y + templShrunk.rows * 1);
-    console.log('final', maxPF.x, maxPF.y, pointF.x, pointF.y);
+    //console.log('final', maxPF.x, maxPF.y, pointF.x, pointF.y);
 
     let midY = (pointF.y + maxPF.y) / 2;
     let midX = (pointF.x + maxPF.x) / 2;
-    console.log('x', midX, (pointF.x + maxPF.x) / 2);
-    console.log('midY', midY, (pointF.y + maxPF.y) / 2);
-    //console.log('x tile', midX/256);
-    //console.log('y tile', midY/256);
-    console.log('tile 4# ', Math.floor((midX) / 256), Math.floor((midY) / 256));
+
+    let mapScale = (4096 / 40);
+    //console.log('mapScale',mapScale);
+    //console.log('scale x', midX/mapScale);
+    //console.log('scale y', midY/mapScale);
+    let myXTile = Math.floor(midX / mapScale);
+    let myYTile = Math.floor(midY / mapScale);
+    //console.log('myXTile', myXTile, 'myYTile', myYTile);
+    let myXrem;
+    let myYrem = (midY - 11.88) % mapScale;
+    //console.log(myXrem*(mapScale/60),myYrem*(mapScale/60));
+
+    let myXCord;
+    let myYCord;
+
+    if (myXTile > 20) {
+      myXrem = (midX - 11.8) % mapScale;
+      //console.log('midX', midX, ' myXrem', myXrem);
+      myXCord = (myXTile - 20) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"E';
+      //console.log("EAST ", myXCord);
+    } else {
+      //11.88?
+      myXrem = (midX) % mapScale;
+      //console.log('midX', midX, ' myXrem', myXrem);
+      //console.log(myXTile, "'", myXrem*(mapScale/60), '"W'  );
+      myXTile = Math.abs(myXTile - 20)
+      myXCord = (myXTile) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"W';
+      //console.log("X", myXCord);
+    }
+
+    if (myYTile == 0) {
+      //console.log('South', myYTile); 
+    } else {
+      //console.log('midY', midY, ' myYrem', myYrem);
+      myYCord = (myYTile) + "'" + (myYrem / (mapScale / 60)).toFixed(1) + '"S';
+//      console.log("South", myYCord);
+    }
+
+
+    //console.log('x', midX, (pointF.x + maxPF.x) / 2);
+    //console.log('midY', midY, (pointF.y + maxPF.y) / 2);
+    //console.log('tile 4# ', Math.floor((midX) / 256), Math.floor((midY) / 256));
     let currImg = document.getElementById(`${menu.childElementCount - 1}`);
     currImg.setAttribute('mxx', maxPF.x);
     currImg.setAttribute('mY', maxPF.y);
     currImg.setAttribute('pX', pointF.x);
     currImg.setAttribute('pY', pointF.y);
-
-
-    //let color = new cv.Scalar(255, 0, 0, 255);
-    //cv.rectangle(srcF, maxPF, pointF, color, 4, cv.LINE_8, 0);
-    //oSContext.strokeRect(maxPF.x * 2, maxPF.y * 2, 50, 50);
-    //oSContext.rect(maxPF.x * 2, maxPF.y * 2, 50, 50);
-    //cv.imshow('canvasFinalOutput', srcF);
+    //let text = document.getElementById("myP").innerText;
+    //let curText = document.getElementsByClassName("centered")[-1];
+    let curText = document.getElementsByClassName("centered");
+    //console.log('curText.length',curText.length);
+    //console.log('curText', curText);
+    //console.log('curText', curText.item(curText.length-1));
+    curText.item(curText.length - 1).innerText = (myXCord + "   " + myYCord);
 
     ctxF.beginPath();
     ctxF.lineWidth = "10";
@@ -263,23 +312,20 @@
     ctxF.rect(pointF.x, pointF.y, maxPF.x - pointF.x, maxPF.y - pointF.y);
     ctxF.stroke();
 
+    dstFinal.delete(); srcF.delete(); templShrunk.delete(); templTrimmedMap.delete();
+    templTrimmedMapI.delete(); maskFinal.delete(); srcFI.delete();
 
-
-
-    dstFinal.delete(); srcF.delete(); templShrunk.delete(); templTrimmedMap.delete(); srcFI.delete();
-    templTrimmedMapI.delete(); maskFinal.delete();
-
-
-    /*     for (var x = 1; x < canvasFinalOutput.width; x += 51.2) {
-          ctxF.moveTo(x, 0);
-          ctxF.lineTo(x, canvasFinalOutput.height);
-        }
-        for (var y = 1; y < canvasFinalOutput.height; y += 51.2) {
-          ctxF.moveTo(0, y);
-          ctxF.lineTo(canvasFinalOutput.width, y);
-        }
-        ctxF.strokeStyle = "#ddd";
-        ctxF.stroke(); */
+    /* 
+             for (var x = 1; x < canvasFinalOutput.width; x += 102.4) {
+              ctxF.moveTo(x, 0);
+              ctxF.lineTo(x, canvasFinalOutput.height);
+            }
+            for (var y = 1; y < canvasFinalOutput.height; y += 102.4) {
+              ctxF.moveTo(0, y);
+              ctxF.lineTo(canvasFinalOutput.width, y);
+            }
+            ctxF.strokeStyle = "#ddd";
+            ctxF.stroke(); */
 
   }
 
