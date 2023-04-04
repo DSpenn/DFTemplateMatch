@@ -112,7 +112,7 @@
   const ctxF = canvasFinalOutput.getContext('2d', { willReadFrequently: true });
 
   const cTX = canvasOutput.getContext('2d', { willReadFrequently: true });
-  const xContext = canvasX.getContext('2d');
+  const xContext = canvasX.getContext('2d', { willReadFrequently: true });
   const ctxCroppedMap = canvasCroppedTm.getContext('2d', { willReadFrequently: true });
 
 
@@ -249,45 +249,45 @@
     let pointF = new cv.Point(maxPF.x + templShrunk.cols * 1, maxPF.y + templShrunk.rows * 1);
     //console.log('final', maxPF.x, maxPF.y, pointF.x, pointF.y);
 
-    let midY = ((pointF.y + maxPF.y) / 2) - 11.9;
+    let midY = ((pointF.y + maxPF.y) / 2) - 15.3;
     //console.log('pointF.y + maxPF.y) / 2', (pointF.y + maxPF.y) / 2);
     let midX = (pointF.x + maxPF.x) / 2;
+    //console.log('midX', midX, 'midY', midY);
 
     let mapScale = (4096 / 40);
     //console.log('mapScale',mapScale);
-    //console.log('scale x', midX/mapScale);
+    //console.log('scale x', midX / mapScale);
     //console.log('scale y', midY/mapScale);
     let myXTile = Math.floor(midX / mapScale);
     let myYTile = Math.floor(midY / mapScale);
-    //console.log('myXTile', myXTile, 'myYTile', myYTile);
-    let myXrem;
+    //console.log('orig myXTile', myXTile, 'myYTile', myYTile);
+    let myXrem = (midX) % mapScale;
     let myYrem = (midY) % mapScale;
-    //console.log(myXrem*(mapScale/60),myYrem*(mapScale/60));
+    //console.log('myXrem', myXrem);
 
     let myXCord;
-    let myYCord;
-
-    if (myXTile > 20) {
-      //console.log('myxtile > 20');
-      myXrem = (midX - 11.9) % mapScale;
-      //console.log('midX', midX, ' myXrem', myXrem);
-      myXCord = (myXTile - 20) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"E';
-      //console.log("EAST ", myXCord);
-    } else if(myXTile < 20) {
-      //11.88?
+    if (midX > 2060) {
+      midX = midX - 15.3;
+      myXTile = Math.floor(midX / mapScale);
       myXrem = (midX) % mapScale;
-      //console.log('midX', midX, ' myXrem', myXrem);
-      //console.log(myXTile, "'", myXrem*(mapScale/60), '"W'  );
-      //console.log('myXTile', myXTile, 20 - myXTile)
-      myXTile = Math.abs(19 - myXTile);
-      //console.log('myXTile', myXTile, 20 - myXTile)
+      myXCord = (myXTile - 20) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"E';
+    } else if (midX < 2048 && midX > 102.5) {
+      //myXTile = Math.abs(19 - myXTile);
+      myXTile = 19-myXTile;
       myXCord = (myXTile) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"W';
-      //console.log("X", myXCord);
+    } else if (midX < 102.5) {
+      myXTile = 19;
+      midX = midX + 25.6;
+      myXrem = (midX) % mapScale;
+      myXCord = (myXTile) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"W';
     }
 
+
+
+    let myYCord;
     if (myYTile == 0) {
-      console.log('Northern tile', myYTile); 
-    } else if(myYTile > 0) {
+      console.log('Northern tile', myYTile);
+    } else if (myYTile > 0) {
       //console.log('midY', midY, ' myYrem', myYrem);
       myYCord = (myYTile) + "'" + (myYrem / (mapScale / 60)).toFixed(1) + '"S';
       //      console.log("South", myYCord);

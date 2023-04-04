@@ -19,13 +19,14 @@ for (let index = 0; index <= 2400; index++) {
 /* console.log(a);
 console.log(a.length); */
 console.log(pixBounds);
-//console.table(b);
-console.log('pixBounds', pixBounds);
+console.log('pixBounds', pixBounds, 'len', pixBounds.length);
 
-//console.log('b[439]',b[439], 'b[467]', b[467]);
+console.log('pixBounds[1200]',pixBounds[1200], 'pixBounds[1207]', pixBounds[1208]);
+console.log('pixBounds[0]',pixBounds[0], 'pixBounds[7]', pixBounds[8]);
 //console.log('b[439]',b[439]/51.2, 'b[467]', b[467]/51.2);
 console.log(pixBounds[pixBounds.length-1]);
-
+console.log(pixBounds[2400]);
+//console.table(pixBounds);
 const tileBounds = [];
 for (let zz = 102.4; zz <= 4097; zz += 102.4) {
   tileBounds.push(zz);
