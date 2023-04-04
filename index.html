@@ -203,7 +203,7 @@
     let templ = cv.imread('canvasX', cv.IMREAD_GRAYSCALE);
     let dst = new cv.Mat();
     //let mask = new cv.Mat();
-    cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF_NORMED);
+    cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF);
     let result = cv.minMaxLoc(dst);
     let maxPoint = result.maxLoc;
     //console.log('maxPoint input',maxPoint);
@@ -241,15 +241,16 @@
     cv.imshow('canvasOutputTest', templShrunk);
     let dstFinal = new cv.Mat();
     let maskFinal = new cv.Mat();
-    cv.matchTemplate(srcF, templShrunk, dstFinal, cv.TM_CCOEFF_NORMED);
+    cv.matchTemplate(srcF, templShrunk, dstFinal, cv.TM_CCOEFF_NORMED, maskFinal);
 
-    let resultF = cv.minMaxLoc(dstFinal);
+    let resultF = cv.minMaxLoc(dstFinal, maskFinal);
     let maxPF = resultF.maxLoc;
 
     let pointF = new cv.Point(maxPF.x + templShrunk.cols * 1, maxPF.y + templShrunk.rows * 1);
     //console.log('final', maxPF.x, maxPF.y, pointF.x, pointF.y);
 
-    let midY = ((pointF.y + maxPF.y) / 2) - 11;
+    let midY = ((pointF.y + maxPF.y) / 2) - 11.9;
+    //console.log('pointF.y + maxPF.y) / 2', (pointF.y + maxPF.y) / 2);
     let midX = (pointF.x + maxPF.x) / 2;
 
     let mapScale = (4096 / 40);
@@ -258,7 +259,7 @@
     //console.log('scale y', midY/mapScale);
     let myXTile = Math.floor(midX / mapScale);
     let myYTile = Math.floor(midY / mapScale);
-    console.log('myXTile', myXTile, 'myYTile', myYTile);
+    //console.log('myXTile', myXTile, 'myYTile', myYTile);
     let myXrem;
     let myYrem = (midY) % mapScale;
     //console.log(myXrem*(mapScale/60),myYrem*(mapScale/60));
@@ -267,25 +268,26 @@
     let myYCord;
 
     if (myXTile > 20) {
+      //console.log('myxtile > 20');
       myXrem = (midX - 11.9) % mapScale;
       //console.log('midX', midX, ' myXrem', myXrem);
       myXCord = (myXTile - 20) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"E';
       //console.log("EAST ", myXCord);
-    } else {
+    } else if(myXTile < 20) {
       //11.88?
       myXrem = (midX) % mapScale;
       //console.log('midX', midX, ' myXrem', myXrem);
       //console.log(myXTile, "'", myXrem*(mapScale/60), '"W'  );
-      console.log('myXTile', myXTile, 20 - myXTile)
+      //console.log('myXTile', myXTile, 20 - myXTile)
       myXTile = Math.abs(19 - myXTile);
-      console.log('myXTile', myXTile, 20 - myXTile)
+      //console.log('myXTile', myXTile, 20 - myXTile)
       myXCord = (myXTile) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"W';
       //console.log("X", myXCord);
     }
 
     if (myYTile == 0) {
-      //console.log('South', myYTile); 
-    } else {
+      console.log('Northern tile', myYTile); 
+    } else if(myYTile > 0) {
       //console.log('midY', midY, ' myYrem', myYrem);
       myYCord = (myYTile) + "'" + (myYrem / (mapScale / 60)).toFixed(1) + '"S';
       //      console.log("South", myYCord);
