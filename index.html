@@ -202,14 +202,14 @@
     let src = cv.imread('canvasOutput', cv.IMREAD_GRAYSCALE);
     let templ = cv.imread('canvasX', cv.IMREAD_GRAYSCALE);
     let dst = new cv.Mat();
-    let mask = new cv.Mat();
-    cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF_NORMED, mask);
+    //let mask = new cv.Mat();
+    cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF_NORMED);
     let result = cv.minMaxLoc(dst);
     let maxPoint = result.maxLoc;
     //console.log('maxPoint input',maxPoint);
     let point = new cv.Point(maxPoint.x + templ.cols, maxPoint.y + templ.rows);
     //console.log(maxPoint.x, maxPoint.y, point.x, point.y);
-    cv.imshow('canvasOutput', src);
+    //cv.imshow('canvasOutput', src);
 
     let trimdInput = new cv.Mat();
     //let rect = new cv.Rect(maxPoint.x - 93, maxPoint.y - 96, 242, 242);
@@ -219,7 +219,8 @@
     cv.imshow('canvasCroppedTm', trimdInput);
     addImgToMenu();
 
-    src.delete(); trimdInput.delete(); templ.delete(); dst.delete(); mask.delete();
+    src.delete(); trimdInput.delete(); templ.delete(); dst.delete();
+    //mask.delete();
 
 
     let srcFI = cv.imread(canvasFinalOutput);
@@ -240,15 +241,15 @@
     cv.imshow('canvasOutputTest', templShrunk);
     let dstFinal = new cv.Mat();
     let maskFinal = new cv.Mat();
-    cv.matchTemplate(srcF, templShrunk, dstFinal, cv.TM_CCOEFF_NORMED, maskFinal);
+    cv.matchTemplate(srcF, templShrunk, dstFinal, cv.TM_CCOEFF_NORMED);
 
-    let resultF = cv.minMaxLoc(dstFinal, maskFinal);
+    let resultF = cv.minMaxLoc(dstFinal);
     let maxPF = resultF.maxLoc;
 
     let pointF = new cv.Point(maxPF.x + templShrunk.cols * 1, maxPF.y + templShrunk.rows * 1);
     //console.log('final', maxPF.x, maxPF.y, pointF.x, pointF.y);
 
-    let midY = (pointF.y + maxPF.y) / 2;
+    let midY = ((pointF.y + maxPF.y) / 2) - 11;
     let midX = (pointF.x + maxPF.x) / 2;
 
     let mapScale = (4096 / 40);
@@ -257,16 +258,16 @@
     //console.log('scale y', midY/mapScale);
     let myXTile = Math.floor(midX / mapScale);
     let myYTile = Math.floor(midY / mapScale);
-    //console.log('myXTile', myXTile, 'myYTile', myYTile);
+    console.log('myXTile', myXTile, 'myYTile', myYTile);
     let myXrem;
-    let myYrem = (midY - 11.88) % mapScale;
+    let myYrem = (midY) % mapScale;
     //console.log(myXrem*(mapScale/60),myYrem*(mapScale/60));
 
     let myXCord;
     let myYCord;
 
     if (myXTile > 20) {
-      myXrem = (midX - 11.8) % mapScale;
+      myXrem = (midX - 11.9) % mapScale;
       //console.log('midX', midX, ' myXrem', myXrem);
       myXCord = (myXTile - 20) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"E';
       //console.log("EAST ", myXCord);
@@ -275,7 +276,9 @@
       myXrem = (midX) % mapScale;
       //console.log('midX', midX, ' myXrem', myXrem);
       //console.log(myXTile, "'", myXrem*(mapScale/60), '"W'  );
-      myXTile = Math.abs(myXTile - 20)
+      console.log('myXTile', myXTile, 20 - myXTile)
+      myXTile = Math.abs(19 - myXTile);
+      console.log('myXTile', myXTile, 20 - myXTile)
       myXCord = (myXTile) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"W';
       //console.log("X", myXCord);
     }
@@ -285,7 +288,7 @@
     } else {
       //console.log('midY', midY, ' myYrem', myYrem);
       myYCord = (myYTile) + "'" + (myYrem / (mapScale / 60)).toFixed(1) + '"S';
-//      console.log("South", myYCord);
+      //      console.log("South", myYCord);
     }
 
 
@@ -315,17 +318,17 @@
     dstFinal.delete(); srcF.delete(); templShrunk.delete(); templTrimmedMap.delete();
     templTrimmedMapI.delete(); maskFinal.delete(); srcFI.delete();
 
-    /* 
-             for (var x = 1; x < canvasFinalOutput.width; x += 102.4) {
-              ctxF.moveTo(x, 0);
-              ctxF.lineTo(x, canvasFinalOutput.height);
-            }
-            for (var y = 1; y < canvasFinalOutput.height; y += 102.4) {
-              ctxF.moveTo(0, y);
-              ctxF.lineTo(canvasFinalOutput.width, y);
-            }
-            ctxF.strokeStyle = "#ddd";
-            ctxF.stroke(); */
+
+    /*     for (var x = 1; x < canvasFinalOutput.width; x += 102.4) {
+          ctxF.moveTo(x, 0);
+          ctxF.lineTo(x, canvasFinalOutput.height);
+        }
+        for (var y = 1; y < canvasFinalOutput.height; y += 102.4) {
+          ctxF.moveTo(0, y);
+          ctxF.lineTo(canvasFinalOutput.width, y);
+        }
+        ctxF.strokeStyle = "#ddd";
+        ctxF.stroke(); */
 
   }
 
