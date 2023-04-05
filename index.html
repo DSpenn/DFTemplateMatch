@@ -83,7 +83,6 @@
   <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
 </div>
 
-
 <div><span style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776; </span>
   <p id="status">OpenCV.js is loading...</p>
 </div>
@@ -121,6 +120,69 @@
     xContext.drawImage(xxx, 0, 0);
   }
 
+  const westEast = [];
+  const nSouth = [];
+  const pixBounds = [];
+  let mapScale = (4096 / 40) / 60; //102.4
+  //console.log(mapScale); //1.7066666666666668
+
+  westEast.push('20"7W', '20"6W', '20"5W', '20"4W', '20"3W', '20"2W', '20"1W', '20"0W');
+  nSouth.push("0'7 N", "0'6 N", "0'5 N", "0'4 N", "0'3 N", "0'2 N", "0'1 N", "0'0");
+
+  for (let fN = 0; fN <= 40; fN++) {
+    if (fN == 0) {
+    } else if (fN <= 20) {
+      for (let sN = 59; sN >= 0; sN--) {
+        let newFN = 20 - fN;
+        let t = newFN.toString() + "'" + sN.toString() + 'W';
+        //a.push({ t })
+        westEast.push(t);
+      }
+    }
+    else if (fN > 20 && fN < 40) {
+      for (let sN = 0; sN < 60; sN++) {
+        let newFN = fN - 21;
+        let t = newFN.toString() + "'" + sN.toString() + 'E';
+        //a.push({ t })
+        westEast.push(t);
+      }
+    }
+    if (fN == 40) {
+      for (let sN = 0; sN < 53; sN++) {
+        let newFN = fN - 21;
+        let t = newFN.toString() + "'" + sN.toString() + 'E';
+        //a.push({ t })
+        westEast.push(t);
+      }
+    }
+  }
+
+  for (let nsi = 0; nsi < 40; nsi++) {
+    if (nsi < 39) {
+      for (let nssN = 0; nssN < 60; nssN++) {
+        //let newFN = 20 - nsi;
+        let t = nsi.toString() + "'" + nssN.toString() + 'S';
+        //a.push({ t })
+        nSouth.push(t);
+      }
+    }
+    if (nsi == 39) {
+      for (let nssN = 0; nssN < 53; nssN++) {
+        let t = nsi.toString() + "'" + nssN.toString() + 'S';
+        //a.push({ t })
+        nSouth.push(t);
+      }
+    }
+  }
+
+
+
+  const pixRanges = [];
+  for (let i = 0; i < westEast.length; i++) {
+    let temp = (parseFloat((i * mapScale).toFixed(1)));
+    pixRanges.push(temp);
+  }
+
   function openNav() {
     document.getElementById("mySidenav").style.width = "250px";
     document.getElementById("main").style.marginLeft = "250px";
@@ -132,8 +194,6 @@
   }
 
   function addImgToMenu() {
-
-
     let cont = document.createElement('div')
     cont.classList.add('container');
     let menuImg = document.createElement("img"); // Use DOM HTMLImageElement
@@ -238,7 +298,7 @@
     //let dsize = new cv.Size(40,40);
     //console.log(canvasCroppedTm.height * .25, canvasCroppedTm.width * .25);
     cv.resize(templTrimmedMap, templShrunk, dsize, 0, 0, cv.INTER_AREA);
-    cv.imshow('canvasOutputTest', templShrunk);
+    //cv.imshow('canvasOutputTest', templShrunk);
     let dstFinal = new cv.Mat();
     let maskFinal = new cv.Mat();
     cv.matchTemplate(srcF, templShrunk, dstFinal, cv.TM_CCOEFF_NORMED, maskFinal);
@@ -249,60 +309,28 @@
     let pointF = new cv.Point(maxPF.x + templShrunk.cols * 1, maxPF.y + templShrunk.rows * 1);
     //console.log('final', maxPF.x, maxPF.y, pointF.x, pointF.y);
 
-    let midY = ((pointF.y + maxPF.y) / 2) - 15.3;
+    let midY = ((pointF.y + maxPF.y) / 2);
     //console.log('pointF.y + maxPF.y) / 2', (pointF.y + maxPF.y) / 2);
     let midX = (pointF.x + maxPF.x) / 2;
-    console.log('midX', midX, 'midY', midY);
-
-    let mapScale = (4096 / 40);
-    //console.log('mapScale',mapScale);
-    //console.log('scale x', midX / mapScale);
-    //console.log('scale y', midY/mapScale);
-    let myXTile = Math.floor(midX / mapScale);
-    let myYTile = Math.floor(midY / mapScale);
-    console.log('orig myXTile', myXTile, 'myYTile', myYTile);
-    let myXrem = (midX) % mapScale;
-    let myYrem = (midY) % mapScale;
-    console.log('myXrem', myXrem);
-
-    let myXCord;
-    if (midX > 2060) {
-      midX = midX - 15.3;
-      myXTile = Math.floor(midX / mapScale);
-      myXrem = (midX) % mapScale;
-      myXCord = (myXTile - 20) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"E';
-    } else if (midX < 2048 && midX > 102.5) {
-      //myXTile = Math.abs(19 - myXTile);
-      //midX = midX - 25.6;
-      //midX = midX + 15.3;
-      myXrem = (midX) % mapScale;
-      myXTile = Math.floor(midX / mapScale);
-      myXTile = 19 - myXTile;
-      console.log('midx', midX, 'myXrem', myXrem, 'myXTile', myXTile);
-      myXCord = (myXTile) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"W';
-    } else if (midX < 102.5) {
-      myXTile = 19;
-      midX = midX + 25.6;
-      myXrem = (midX) % mapScale;
-      myXCord = (myXTile) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"W';
-    }
+    //console.log('midX', midX, 'midY', midY);
 
 
+    let findXT = pixRanges.reduce(function (prev, curr) {
+      return (Math.abs(curr - midX) < Math.abs(prev - midX) ? curr : prev);
+    });
+    //console.log('findXT', findXT);
+    let myXCord = westEast[pixRanges.indexOf(findXT)];
 
-    let myYCord;
-    if (myYTile == 0) {
-      console.log('Northern tile', myYTile);
-    } else if (myYTile > 0) {
-      //console.log('midY', midY, ' myYrem', myYrem);
-      myYCord = (myYTile) + "'" + (myYrem / (mapScale / 60)).toFixed(1) + '"S';
-      //      console.log("South", myYCord);
-    }
+    let findYT = pixRanges.reduce(function (prev, curr) {
+      return (Math.abs(curr - midY) < Math.abs(prev - midY) ? curr : prev);
+    });
+    //console.log('findYT', findYT);
+    let myYCord = nSouth[pixRanges.indexOf(findYT)];
 
+    //console.log('myXCord', myXCord, 'myYCord',myYCord);
 
-
-    //console.log('x', midX, (pointF.x + maxPF.x) / 2);
-    //console.log('midY', midY, (pointF.y + maxPF.y) / 2);
     //console.log('tile 4# ', Math.floor((midX) / 256), Math.floor((midY) / 256));
+
     let currImg = document.getElementById(`${menu.childElementCount - 1}`);
     currImg.setAttribute('mxx', maxPF.x);
     currImg.setAttribute('mY', maxPF.y);
@@ -326,8 +354,7 @@
     dstFinal.delete(); srcF.delete(); templShrunk.delete(); templTrimmedMap.delete();
     templTrimmedMapI.delete(); maskFinal.delete(); srcFI.delete();
 
-    navigator.clipboard.writeText(myXCord + "   " + myYCord);
-
+    navigator.clipboard.writeText(myXCord + " " + myYCord);
 
     /*     for (var x = 1; x < canvasFinalOutput.width; x += 102.4) {
           ctxF.moveTo(x, 0);
