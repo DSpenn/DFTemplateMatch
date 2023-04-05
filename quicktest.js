@@ -2,12 +2,13 @@ const a = [];
 const pixBounds = [];
 
 a.push('0,7N', '0,6N', '0,5N', '0,4N', '0,3N', '0,2N', '0,1N',)
-for (let block = 0; block < 40; block++) {
-  for (let second = 0; second < 60; second++) {
-    a.push({ block, second });
+for (let fN = 0; fN < 40; fN++) {
+  for (let sN = 0; sN < 60; sN++) {
+    a.push({ fN, sN });
   }
 
 }
+console.log(a);
 
 
 for (let index = 0; index <= 2400; index++) {
@@ -47,9 +48,9 @@ const a = [];
 const b = [];
 
 a.push('0,7N','0,6N','0,5N','0,4N','0,3N','0,2N','0,1N',)
-for (let block = 0; block < 40; block++) {
-  for (let second = 0; second < 60; second++) {
-    a.push({block,second});
+for (let fN = 0; fN < 40; fN++) {
+  for (let sN = 0; sN < 60; sN++) {
+    a.push({fN,sN});
   }
   
 }

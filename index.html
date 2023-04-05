@@ -252,7 +252,7 @@
     let midY = ((pointF.y + maxPF.y) / 2) - 15.3;
     //console.log('pointF.y + maxPF.y) / 2', (pointF.y + maxPF.y) / 2);
     let midX = (pointF.x + maxPF.x) / 2;
-    //console.log('midX', midX, 'midY', midY);
+    console.log('midX', midX, 'midY', midY);
 
     let mapScale = (4096 / 40);
     //console.log('mapScale',mapScale);
@@ -260,10 +260,10 @@
     //console.log('scale y', midY/mapScale);
     let myXTile = Math.floor(midX / mapScale);
     let myYTile = Math.floor(midY / mapScale);
-    //console.log('orig myXTile', myXTile, 'myYTile', myYTile);
+    console.log('orig myXTile', myXTile, 'myYTile', myYTile);
     let myXrem = (midX) % mapScale;
     let myYrem = (midY) % mapScale;
-    //console.log('myXrem', myXrem);
+    console.log('myXrem', myXrem);
 
     let myXCord;
     if (midX > 2060) {
@@ -273,7 +273,12 @@
       myXCord = (myXTile - 20) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"E';
     } else if (midX < 2048 && midX > 102.5) {
       //myXTile = Math.abs(19 - myXTile);
-      myXTile = 19-myXTile;
+      //midX = midX - 25.6;
+      //midX = midX + 15.3;
+      myXrem = (midX) % mapScale;
+      myXTile = Math.floor(midX / mapScale);
+      myXTile = 19 - myXTile;
+      console.log('midx', midX, 'myXrem', myXrem, 'myXTile', myXTile);
       myXCord = (myXTile) + "'" + (myXrem / (mapScale / 60)).toFixed(1) + '"W';
     } else if (midX < 102.5) {
       myXTile = 19;
@@ -292,6 +297,7 @@
       myYCord = (myYTile) + "'" + (myYrem / (mapScale / 60)).toFixed(1) + '"S';
       //      console.log("South", myYCord);
     }
+
 
 
     //console.log('x', midX, (pointF.x + maxPF.x) / 2);
@@ -319,6 +325,8 @@
 
     dstFinal.delete(); srcF.delete(); templShrunk.delete(); templTrimmedMap.delete();
     templTrimmedMapI.delete(); maskFinal.delete(); srcFI.delete();
+
+    navigator.clipboard.writeText(myXCord + "   " + myYCord);
 
 
     /*     for (var x = 1; x < canvasFinalOutput.width; x += 102.4) {
