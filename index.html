@@ -96,10 +96,12 @@
 </div>
 <footer hidden="true">
   <canvas id="canvasX" width="40" height="40" hidden="true"></canvas>
-  <img id="fullMapBig" src="./44.png" alt="the fullMapBig" hidden="true" onload="itLoaded()" />
   <img id="xxx" src="x.png" alt="the x" hidden="true" />
+  <img id="fullMapBig" src="./44.png" alt="the fullMapBig" hidden="true" onload="itLoaded()" />
 </footer>
 <script type="text/javascript">
+
+  document.body.style.zoom = "75%"
 
   const menu = document.getElementById("mySidenav")
 
@@ -123,11 +125,10 @@
   const westEast = [];
   const nSouth = [];
   const pixBounds = [];
-  let mapScale = (4096 / 40) / 60; //102.4
-  //console.log(mapScale); //1.7066666666666668
+  const mapScale = (4096 / 40) / 60; //(102.4)/60 = 1.7066666666666668
 
   westEast.push('20"7W', '20"6W', '20"5W', '20"4W', '20"3W', '20"2W', '20"1W', '20"0W');
-  nSouth.push("0'7 N", "0'6 N", "0'5 N", "0'4 N", "0'3 N", "0'2 N", "0'1 N", "0'0");
+  nSouth.push("0'7 N", "0'6 N", "0'5 N", "0'4 N", "0'3 N", "0'2 N", "0'1 N");
 
   for (let fN = 0; fN <= 40; fN++) {
     if (fN == 0) {
@@ -156,20 +157,19 @@
       }
     }
   }
+  westEast.splice(1208,1);  //"0'0 W", "0'0 E"
 
   for (let nsi = 0; nsi < 40; nsi++) {
     if (nsi < 39) {
       for (let nssN = 0; nssN < 60; nssN++) {
         //let newFN = 20 - nsi;
         let t = nsi.toString() + "'" + nssN.toString() + 'S';
-        //a.push({ t })
         nSouth.push(t);
       }
     }
     if (nsi == 39) {
       for (let nssN = 0; nssN < 53; nssN++) {
         let t = nsi.toString() + "'" + nssN.toString() + 'S';
-        //a.push({ t })
         nSouth.push(t);
       }
     }
@@ -178,10 +178,12 @@
 
 
   const pixRanges = [];
-  for (let i = 0; i < westEast.length; i++) {
+  for (let i = 1; i < nSouth.length+1; i++) {
     let temp = (parseFloat((i * mapScale).toFixed(1)));
     pixRanges.push(temp);
   }
+
+  console.log(westEast.length, nSouth.length, pixRanges.length);
 
   function openNav() {
     document.getElementById("mySidenav").style.width = "250px";
@@ -260,14 +262,14 @@
     cTX.drawImage(imgPaste, 0, 0);
 
     let src = cv.imread('canvasOutput', cv.IMREAD_GRAYSCALE);
-    let templ = cv.imread('canvasX', cv.IMREAD_GRAYSCALE);
+    //let templ = cv.imread('canvasX', cv.IMREAD_GRAYSCALE);
+    let templ = cv.imread(document.getElementById("xxx", cv.IMREAD_GRAYSCALE));
     let dst = new cv.Mat();
     //let mask = new cv.Mat();
     cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF);
     let result = cv.minMaxLoc(dst);
     let maxPoint = result.maxLoc;
-    //console.log('maxPoint input',maxPoint);
-    let point = new cv.Point(maxPoint.x + templ.cols, maxPoint.y + templ.rows);
+    //let point = new cv.Point(maxPoint.x + templ.cols, maxPoint.y + templ.rows);
     //console.log(maxPoint.x, maxPoint.y, point.x, point.y);
     //cv.imshow('canvasOutput', src);
 
@@ -282,7 +284,6 @@
     src.delete(); trimdInput.delete(); templ.delete(); dst.delete();
     //mask.delete();
 
-
     let srcFI = cv.imread(canvasFinalOutput);
     let srcF = new cv.Mat();
     cv.cvtColor(srcFI, srcF, cv.COLOR_RGBA2GRAY, 0);
@@ -291,6 +292,7 @@
 
     let templTrimmedMapI = cv.imread('canvasCroppedTm');
     let templTrimmedMap = new cv.Mat();
+    //cv.cvtColor(src, src, cv.COLOR_RGBA2GRAY, 0);
     cv.cvtColor(templTrimmedMapI, templTrimmedMap, cv.COLOR_RGBA2GRAY, 0);
 
     let templShrunk = new cv.Mat();
@@ -326,7 +328,6 @@
     });
     //console.log('findYT', findYT);
     let myYCord = nSouth[pixRanges.indexOf(findYT)];
-
     //console.log('myXCord', myXCord, 'myYCord',myYCord);
 
     //console.log('tile 4# ', Math.floor((midX) / 256), Math.floor((midY) / 256));
