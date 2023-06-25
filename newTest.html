@@ -82,7 +82,7 @@
 <div id="mySidenav" class="sidenav">
   <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
 </div>
-
+<div id="map"></div>
 <div><span style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776; </span>
   <p id="status">OpenCV.js is loading...</p>
 </div>
@@ -101,7 +101,11 @@
 </footer>
 <script type="text/javascript">
 
-  document.documentElement.style.zoom = "50%"
+  document.body.style.zoom = "50%"
+  //window.outerWidth 1920 
+  //const expectedInputImageSize = window.outerWidth;
+  //console.log('expectedInputImageSize',expectedInputImageSize);
+
   const menu = document.getElementById("mySidenav")
 
   const canvasOutput = document.querySelector("#canvasOutput");
@@ -113,6 +117,24 @@
   const cTX = canvasOutput.getContext('2d', { willReadFrequently: true });
   const xContext = canvasX.getContext('2d', { willReadFrequently: true });
   const ctxCroppedMap = canvasCroppedTm.getContext('2d', { willReadFrequently: true });
+
+  /*   var bounds = [[-16383,-16383], [16384, 16384]];
+    var map = L.map('map', {
+    crs: L.CRS.Simple,
+    minZoom: -4.83,
+    maxZoom: -4.83,
+    maxBounds: bounds,
+    maxBoundsViscosity: 1.0
+    })
+    var markerGroup = L.layerGroup().addTo(map);
+    var image = L.imageOverlay("/44.png", bounds).addTo(map);
+    map.fitBounds(bounds);
+  
+    const data = JSON.parse(xhr.responseText);
+    let heat = L.heatLayer(data.ganks, {radius: 12, blur: 9}).addTo(map) */
+
+
+
 
 
   function itLoaded() {
@@ -129,44 +151,56 @@
   nSouth.push("0'7 N", "0'6 N", "0'5 N", "0'4 N", "0'3 N", "0'2 N", "0'1 N");
 
   for (let fN = 0; fN <= 40; fN++) {
-  if (fN == 0) {
-    continue;
-  } else if (fN <= 20) {
-    for (let sN = 59; sN >= 0; sN--) {
-      let newFN = 20 - fN;
-      let t = `${newFN}'${sN}W`;
-      westEast.push(t);
+    if (fN == 0) {
+    } else if (fN <= 20) {
+      for (let sN = 59; sN >= 0; sN--) {
+        let newFN = 20 - fN;
+        let t = newFN.toString() + "'" + sN.toString() + 'W';
+        //a.push({ t })
+        westEast.push(t);
+      }
     }
-  } else if (fN > 20 && fN < 40) {
-    for (let sN = 0; sN < 60; sN++) {
-      let newFN = fN - 21;
-      let t = `${newFN}'${sN}E`;
-      westEast.push(t);
+    else if (fN > 20 && fN < 40) {
+      for (let sN = 0; sN < 60; sN++) {
+        let newFN = fN - 21;
+        let t = newFN.toString() + "'" + sN.toString() + 'E';
+        //a.push({ t })
+        westEast.push(t);
+      }
     }
-  } else if (fN == 40) {
-    for (let sN = 0; sN < 53; sN++) {
-      let newFN = fN - 21;
-      let t = `${newFN}'${sN}E`;
-      westEast.push(t);
+    if (fN == 40) {
+      for (let sN = 0; sN < 53; sN++) {
+        let newFN = fN - 21;
+        let t = newFN.toString() + "'" + sN.toString() + 'E';
+        //a.push({ t })
+        westEast.push(t);
+      }
     }
   }
-}
-  westEast.splice(1208,1);  //"0'0 W" is the same as "0'0 E"
+  westEast.splice(1208, 1);  //"0'0 W" is the same as "0'0 E"
 
-  westEast.splice(1208, 1); //"0'0 W" is the same as "0'0 E"
-
-for (let nsi = 0; nsi < 40; nsi++) {
-  let nssNMax = (nsi == 39) ? 53 : 60;
-  for (let nssN = 0; nssN < nssNMax; nssN++) {
-    let t = `${nsi}'${nssN}S`;
-    nSouth.push(t);
+  for (let nsi = 0; nsi < 40; nsi++) {
+    if (nsi < 39) {
+      for (let nssN = 0; nssN < 60; nssN++) {
+        //let newFN = 20 - nsi;
+        let t = nsi.toString() + "'" + nssN.toString() + 'S';
+        nSouth.push(t);
+      }
+    }
+    if (nsi == 39) {
+      for (let nssN = 0; nssN < 53; nssN++) {
+        let t = nsi.toString() + "'" + nssN.toString() + 'S';
+        nSouth.push(t);
+      }
+    }
   }
-}
 
-for (let i = 1; i <= nSouth.length; i++) {
-  let temp = parseFloat((i * mapScale).toFixed(1));
-  pixRanges.push(temp);
-}
+  for (let i = 1; i < nSouth.length + 1; i++) {
+    let temp = (parseFloat((i * mapScale).toFixed(1)));
+    pixRanges.push(temp);
+  }
+
+  //console.log(westEast.length, nSouth.length, pixRanges.length);
 
   function openNav() {
     document.getElementById("mySidenav").style.width = "250px";
@@ -184,6 +218,8 @@ for (let i = 1; i <= nSouth.length; i++) {
     let menuImg = document.createElement("img"); // Use DOM HTMLImageElement
     menuImg.addEventListener("click", clickedMenuImage)
     menuImg.src = canvasCroppedTm.toDataURL();
+    //console.log('menu.childElementCount',menu.childElementCount);
+    //menuImg.alt = `${menu.childElementCount + 1}`;
     menuImg.id = `${menu.childElementCount}`;
     menuImg.naturalHeight = 250;
     menuImg.naturalWidth = 250;
@@ -198,11 +234,14 @@ for (let i = 1; i <= nSouth.length; i++) {
   }
 
   function clickedMenuImage(e) {
+    //console.log(e.target.getAttribute("mxx"));
+    //console.log(e.target.getAttribute("mY"));
     ctxF.beginPath();
     ctxF.lineWidth = "10";
     ctxF.strokeStyle = "blue";
     ctxF.rect(e.target.getAttribute("mxx"), e.target.getAttribute("mY"), 44, 43);
     ctxF.stroke();
+    //data-m-x="1795" data-m-y="197" data-p-x="1835.3" data-p-y="237.3">
   }
 
   document.addEventListener("paste", pasteImage);
@@ -222,11 +261,20 @@ for (let i = 1; i <= nSouth.length; i++) {
       }
       const clipboardContents = await navigator.clipboard.read();
       for (const item of clipboardContents) {
-        if (!item.types.includes("image/png")) {
-          throw new Error("Clipboard contains non-image data.");
+        console.log('item.types', item.types);
+        if (item.types.includes("image/png")) {
+          let blob = await item.getType("image/png")
+          await handleImg(blob);
         }
-        let blob = await item.getType("image/png")
-        await handleImg(blob);
+
+        else if (item.types.includes("text/plain")) {
+          let blob = await item.getType("text/plain")
+          //  "text/plain" //"text/html"
+          console.log('item.types', item.types);
+          //const file = item.clipboardData.files[0];
+          //console.log(await blob.text());
+          await handleText(blob);
+        }
       }
     } catch (error) {
       console.log(error);
@@ -238,56 +286,70 @@ for (let i = 1; i <= nSouth.length; i++) {
   async function handleImg(blob) {
     let imgPaste = await createImageBitmap(blob);
     cTX.drawImage(imgPaste, 0, 0);
-    let src = cv.imread('canvasOutput', cv.IMREAD_GRAYSCALE);
-    let templ = cv.imread(document.getElementById("xxx", cv.IMREAD_GRAYSCALE));
-    let dst = new cv.Mat();
-    cv.matchTemplate(src, templ, dst, cv.TM_CCOEFF);
-    let result = cv.minMaxLoc(dst);
-    let maxPoint = result.maxLoc;
-    let trimdInput = new cv.Mat();
-    let rect = new cv.Rect(maxPoint.x - 98, maxPoint.y - 98, 248, 248);
-    trimdInput = src.roi(rect);
-    cv.imshow('canvasCroppedTm', trimdInput);
-    addImgToMenu();
-    src.delete(); trimdInput.delete(); templ.delete(); dst.delete();
-    let srcFI = cv.imread(canvasFinalOutput);
-    let srcF = new cv.Mat();
-    cv.cvtColor(srcFI, srcF, cv.COLOR_RGBA2GRAY, 0);
-    let templTrimmedMapI = cv.imread('canvasCroppedTm');
-    let templTrimmedMap = new cv.Mat();
-    cv.cvtColor(templTrimmedMapI, templTrimmedMap, cv.COLOR_RGBA2GRAY, 0);
-    let templShrunk = new cv.Mat();
-    let dsize = new cv.Size(canvasCroppedTm.height * .25, canvasCroppedTm.width * .25);
-    cv.resize(templTrimmedMap, templShrunk, dsize, 0, 0, cv.INTER_AREA);
-    let dstFinal = new cv.Mat();
-    let maskFinal = new cv.Mat();
-    cv.matchTemplate(srcF, templShrunk, dstFinal, cv.TM_CCOEFF_NORMED, maskFinal);
-    let resultF = cv.minMaxLoc(dstFinal, maskFinal);
-    let maxPF = resultF.maxLoc;
-    let pointF = new cv.Point(maxPF.x + templShrunk.cols * 1, maxPF.y + templShrunk.rows * 1);
-    let midY = ((pointF.y + maxPF.y) / 2);
-    let midX = (pointF.x + maxPF.x) / 2;
-    let findXT = pixRanges.reduce((prev, curr) => 
-      (Math.abs(curr - midX) < Math.abs(prev - midX) ? curr : prev));
-    let myXCord = westEast[pixRanges.indexOf(findXT)];
-    let findYT = pixRanges.reduce((prev, curr) => 
-      (Math.abs(curr - midY) < Math.abs(prev - midY) ? curr : prev));
-    let myYCord = nSouth[pixRanges.indexOf(findYT)];
-    let currImg = document.getElementById(`${menu.childElementCount - 1}`);
-    currImg.setAttribute('mxx', maxPF.x);
-    currImg.setAttribute('mY', maxPF.y);
-    currImg.setAttribute('pX', pointF.x);
-    currImg.setAttribute('pY', pointF.y);
-    let curText = document.getElementsByClassName("centered");
-    curText.item(curText.length - 1).innerText = (myXCord + "   " + myYCord);
-    ctxF.beginPath();
-    ctxF.lineWidth = "10";
-    ctxF.strokeStyle = "red";
-    ctxF.rect(pointF.x, pointF.y, maxPF.x - pointF.x, maxPF.y - pointF.y);
-    ctxF.stroke();
-    dstFinal.delete(); srcF.delete(); templShrunk.delete(); templTrimmedMap.delete();
-    templTrimmedMapI.delete(); maskFinal.delete(); srcFI.delete();
-    navigator.clipboard.writeText(myXCord + " " + myYCord);
+
+  }
+
+  async function handleText(blob) {
+    const t = await blob.text();
+    const tt = JSON.parse(t);
+    //console.log(t);
+    console.log('tt', tt);
+    //const arr = [t];
+    //console.log(arr);
+    //const test = t.split('"');
+    //console.log(test);
+
+    for (let index = 0; index < tt.length; index++) {
+      const element = tt[index];
+      const tSplit = element.split(" ");
+      //console.log(tSplit);
+      let scale = 4096 / 40;
+      //      ['6', '58', 'W', '11', '49', 'S']
+      if (tSplit[2] == 'W') {
+        console.log('W');
+        let x = Number(tSplit[0]) + 19;
+        let xx = x * scale;
+        //console.log('xx', xx);
+        let xRem = Number(tSplit[1]);
+        let xxRem = xRem / (scale / 60);
+        //console.log('xxRem', xxRem);
+        //console.log(xx + xxRem);
+        let X = xx + xxRem;
+        let Y = (Number(tSplit[3]) * scale) + (Number(tSplit[4]) / (scale / 60));
+        console.log(X.toFixed(0), Y.toFixed(0));
+        ctxF.fillRect(X, Y, 15, 5);
+      }
+      else {
+        let x = Number(tSplit[0]);
+        let xx = x * scale;
+        //console.log('xx', xx);
+        let xRem = Number(tSplit[1]);
+        let xxRem = xRem / (scale / 60);
+        //console.log('xxRem', xxRem);
+        //console.log(xx + xxRem);
+        let X = xx + xxRem;
+        let Y = (Number(tSplit[3]) * scale) + (Number(tSplit[4]) / (scale / 60));
+        //console.log(X, Y);
+        //console.log(X.toFixed(0), Y.toFixed(0));
+      ctxF.fillRect(X.toFixed(0), Y.toFixed(0), 15, 5);
+      }
+
+
+
+/*       let y = Number(tSplit[0]);
+      let yy = y * scale;
+      //console.log('yy',yy);
+      let yRem = Number(tSplit[4]);
+      let yyRem = yRem / (scale / 60);
+      //console.log('yyRem',yyRem);
+      console.log(yy + yyRem);
+      let yyy = yy + yyRem;
+console.log('Y', Y, 'yyy', yyy); */
+      //console.log(xx.toFixed(0) + xxRem.toFixed(0));
+
+
+    }
+
   }
 
   const Module = {

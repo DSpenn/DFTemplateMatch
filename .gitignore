@@ -7,3 +7,6 @@ leafyindex.html
 test.json
 inputs/*
 ranges.json
+heat.json
+heatTest.js
+heatTest copy.js
